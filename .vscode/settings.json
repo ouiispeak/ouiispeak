@@ -1,0 +1,11 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+
+  // Suppress diagnostics from external projects (e.g., tsconfigs inside node_modules).
+  "typescript.tsserver.experimental.enableProjectDiagnostics": false,
+
+  // Optional: keep ESLint focused on this workspace
+  "eslint.workingDirectories": [{ "mode": "auto" }]
+}
+
