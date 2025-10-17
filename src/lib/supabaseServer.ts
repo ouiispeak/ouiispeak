@@ -1,9 +1,18 @@
-// Server-side Supabase client for App Router pages/layouts.
-
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 
-export function createServerSupabase() {
-  // Pass the Next.js cookies function directly (sync), as expected by auth-helpers.
-  return createServerComponentClient({ cookies });
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+export async function createServerSupabase() {
+  const cookieStore = await cookies();
+  return createServerClient(url, anon, {
+    cookies: {
+      // Reading cookies is allowed in server components / layouts
+      get: (name: string) => cookieStore.get(name)?.value,
+      // But writing cookies in RSC/SSR will throw. No-ops here:
+      set: () => {},
+      remove: () => {},
+    },
+  });
 }

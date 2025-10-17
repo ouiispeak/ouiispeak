@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: "OuiiSpeak — Contact" };
+export const metadata: Metadata = { title: 'OuiiSpeak — Contact' };
 
 export default function ContactPage() {
   return (

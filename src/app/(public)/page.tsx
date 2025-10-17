@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: "OuiiSpeak — Page de destination" };
+export const metadata: Metadata = { title: 'OuiiSpeak — Page de destination' };
 
 export default function LandingPage() {
   return (
@@ -9,3 +9,4 @@ export default function LandingPage() {
     </main>
   );
 }
+

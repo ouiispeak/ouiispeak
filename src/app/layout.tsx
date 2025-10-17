@@ -7,28 +7,18 @@ export const metadata: Metadata = { title: 'OuiiSpeak' };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const supabase = await createServerSupabase();
-
-  // Read session (optional here, but keeps the cookie in sync)
-  const { data: { session } } = await supabase.auth.getSession();
-
-  // Fetch authenticated user for trusted display data
   const { data: { user } } = await supabase.auth.getUser();
 
   return (
     <html lang="fr">
       <body>
-        <header
-          style={{ padding: '12px 16px', borderBottom: '1px solid #ddd' }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '16px',
-            }}
-          >
-            {/* LEFT: nav links */}
+        <header style={{ padding: '12px 16px', borderBottom: '1px solid #ddd' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '16px'
+          }}>
             <nav style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               <a href="/">Page de destination</a>
               <a href="/accueil">Accueil</a>
@@ -37,8 +27,6 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               <a href="/contact">Contact</a>
               <a href="/tableau-de-bord">Tableau de bord</a>
             </nav>
-
-            {/* RIGHT: auth state */}
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
               {user ? (
                 <>
