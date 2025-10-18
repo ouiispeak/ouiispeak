@@ -1,10 +1,9 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 
 export async function POST(_req: NextRequest) {
   const cookieStore = await cookies();
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -21,7 +20,6 @@ export async function POST(_req: NextRequest) {
     }
   );
 
-  // Touch the session to ensure cookies are synced server-side
   await supabase.auth.getUser();
   return new NextResponse(null, { status: 204 });
 }

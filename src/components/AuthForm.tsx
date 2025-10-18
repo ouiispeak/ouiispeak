@@ -17,9 +17,9 @@ export default function AuthForm() {
     if (error) setMsg(error.message);
     else {
       setMsg('Compte créé. Redirection…');
-      await fetch('/auth/callback', { method: 'POST' });
-      router.replace('/tableau-de-bord');
-      router.refresh();
+      // Wait a moment for auth state to propagate
+      await new Promise(resolve => setTimeout(resolve, 100));
+      router.push('/tableau-de-bord');
     }
     setLoading(false);
   }
@@ -30,9 +30,9 @@ export default function AuthForm() {
     if (error) setMsg(error.message);
     else {
       setMsg('Connexion réussie. Redirection…');
-      await fetch('/auth/callback', { method: 'POST' });
-      router.replace('/tableau-de-bord');
-      router.refresh();
+      // Wait a moment for auth state to propagate
+      await new Promise(resolve => setTimeout(resolve, 100));
+      router.push('/tableau-de-bord');
     }
     setLoading(false);
   }
