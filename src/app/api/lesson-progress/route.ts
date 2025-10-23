@@ -3,7 +3,7 @@ import { createServerSupabase } from '@/lib/supabaseServer';
 
 export async function POST(req: Request) {
   try {
-    const { lesson_slug, slide_id, percent, done } = await req.json();
+    const { lesson_slug, slide_id: _slide_id, percent, done } = await req.json();
     if (!lesson_slug || typeof lesson_slug !== 'string') {
       return NextResponse.json({ error: 'lesson_slug manquant' }, { status: 400 });
     }

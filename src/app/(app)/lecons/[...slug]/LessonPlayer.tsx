@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { useLessonNotes } from '@/components/lesson/useLessonNotes';
 
 export type Slide = 
