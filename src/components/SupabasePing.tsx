@@ -10,9 +10,7 @@ export default function SupabasePing() {
       try {
         // quick sanity: print the public envs that Next exposes
         // (they should NOT be empty)
-        // @ts-ignore
         console.log('ENV URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-        // @ts-ignore
         console.log('ENV ANON length:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length);
 
         const { data, error } = await supabase.auth.getSession();
@@ -20,6 +18,7 @@ export default function SupabasePing() {
 
         setStatus(`connected ✅ (session: ${data.session ? 'yes' : 'no'})`);
         console.log('Supabase session:', data.session);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (e: any) {
         console.error('Supabase ping error:', e);
         setStatus('connection error ❌ — check console for details');

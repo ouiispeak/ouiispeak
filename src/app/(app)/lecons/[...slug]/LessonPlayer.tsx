@@ -191,6 +191,7 @@ const LessonPlayer = forwardRef<LessonPlayerHandle, LessonPlayerProps>(
       }
     };
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useImperativeHandle(ref, () => ({ next, prev, goTo, index }), [index]);
 
     return (

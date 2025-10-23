@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
@@ -11,14 +12,14 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
           gap: '16px'
         }}>
           <nav style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <a href="/">Page de destination</a>
-            <a href="/accueil">Accueil</a>
-            <a href="/a-propos">À propos</a>
-            <a href="/abonnements">Abonnements</a>
-            <a href="/contact">Contact</a>
+            <Link href="/">Page de destination</Link>
+            <Link href="/accueil">Accueil</Link>
+            <Link href="/a-propos">À propos</Link>
+            <Link href="/abonnements">Abonnements</Link>
+            <Link href="/contact">Contact</Link>
           </nav>
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <a href="/auth">Se connecter</a>
+            <Link href="/auth">Se connecter</Link>
           </div>
         </div>
       </header>

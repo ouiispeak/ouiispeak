@@ -16,7 +16,7 @@ export default async function ActivitesPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/auth');
 
-  const { data, error } = await supabase
+  const { data, error: _error } = await supabase
     .from('user_bookmarks')
     .select('id, lesson_slug, slide_id, created_at')
     .eq('user_id', user.id)

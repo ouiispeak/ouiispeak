@@ -6,6 +6,7 @@ export type LessonRow = {
   order_index: number;
   estimated_minutes: number | null;
   required_score: number | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   content: any | null;
 };
 
@@ -22,6 +23,7 @@ export type UserLessonRow = {
   notes: string | null;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function fetchModuleAndLessons(supabase: any, moduleSlug: string) {
   // Get the module
   const { data: module, error: modErr } = await supabase
@@ -42,6 +44,7 @@ export async function fetchModuleAndLessons(supabase: any, moduleSlug: string) {
   return { module, lessons: lessons as LessonRow[] };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function fetchUserLessonProgress(supabase: any, userId: string, lessonIds: string[]) {
   if (!userId || lessonIds.length === 0) return [];
   const { data, error } = await supabase

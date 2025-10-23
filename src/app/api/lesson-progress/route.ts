@@ -66,6 +66,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ ok: true });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? 'Erreur inconnue' }, { status: 500 });
   }

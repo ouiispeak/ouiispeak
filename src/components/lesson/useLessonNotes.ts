@@ -25,6 +25,7 @@ export function useLessonNotes(lessonSlug: string) {
       );
       const json = await res.json();
       setNotes(Array.isArray(json.data) ? json.data : []);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       setError(e?.message ?? 'Erreur inattendue');
     } finally {

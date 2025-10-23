@@ -10,9 +10,11 @@ export async function POST(_req: NextRequest) {
     {
       cookies: {
         get: (name: string) => cookieStore.get(name)?.value,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         set: (name: string, value: string, options?: any) => {
           cookieStore.set({ name, value, ...options });
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         remove: (name: string, options?: any) => {
           cookieStore.set({ name, value: '', ...options, maxAge: 0 });
         },

@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function LessonsIndex() {
   const supabase = await createServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user: _user } } = await supabase.auth.getUser();
   // Optional guard:
   // if (!user) redirect('/auth');
 
