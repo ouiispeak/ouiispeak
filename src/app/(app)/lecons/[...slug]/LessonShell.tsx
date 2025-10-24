@@ -13,24 +13,45 @@ export default function LessonShell({ lessonSlug, slides }: Props) {
   const playerRef = useRef<LessonPlayerHandle>(null);
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', height: '100vh' }}>
-      <aside style={{ borderRight: '1px solid #ddd', padding: 16 }}>
-        <h3 style={{ marginBottom: 12 }}>Leçon</h3>
-        <div style={{ display: 'grid', gap: 8 }}>
-          <button onClick={() => playerRef.current?.prev()}>⬅️ Précédent</button>
-          <button onClick={() => playerRef.current?.next()}>Suivant ➡️</button>
-          <Link href="/lecons">Enregistrer & Quitter</Link>
-        </div>
-      </aside>
-
-      <section style={{ height: '100vh' }}>
+    <>
+      {/* MAIN LESSON AREA */}
+      <div className="flex-1 min-w-0">
         <LessonPlayer
           ref={playerRef}
           lessonSlug={lessonSlug}
           slides={slides}
           hideInternalNav
         />
-      </section>
-    </div>
+      </div>
+
+      {/* SIDEBAR / TOOLS AREA */}
+      <aside className="w-full md:w-56 border-t md:border-t-0 md:border-l border-[#ddd] p-4 flex flex-col gap-3 text-sm">
+        <h3 className="font-medium text-[#222326] mb-2">Leçon</h3>
+        
+        <div className="flex flex-col gap-2">
+          <button 
+            onClick={() => playerRef.current?.prev()}
+            className="text-[#222326] hover:text-blue-600 hover:underline text-left"
+          >
+            ⬅️ Précédent
+          </button>
+          <button 
+            onClick={() => playerRef.current?.next()}
+            className="text-[#222326] hover:text-blue-600 hover:underline text-left"
+          >
+            Suivant ➡️
+          </button>
+        </div>
+
+        <div className="border-t border-[#ddd] pt-3 mt-3">
+          <Link 
+            href="/lecons"
+            className="text-[#222326] hover:text-blue-600 hover:underline block"
+          >
+            💾 Enregistrer & Quitter
+          </Link>
+        </div>
+      </aside>
+    </>
   );
 }
