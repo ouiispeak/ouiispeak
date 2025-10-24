@@ -5,7 +5,7 @@ export default function ContactPage() {
   return (
     <main>
       <h1>Contact</h1>
-      <p>Écrivez-nous : bonjour@ouiispeak.fr</p>
+      <p>Écrivez-nous : hq@ouiispeak.fr</p>
     </main>
   );
 }
