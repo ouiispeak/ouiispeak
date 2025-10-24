@@ -12,14 +12,14 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <>
-      {/* Global header bar on beige background */}
-      <div className="bg-[#f6f5f3] text-[#222326]">
-        <AppHeader email={user?.email ?? null} />
-      </div>
+    <div className="bg-[#f6f5f3] text-[#222326] min-h-screen flex flex-col">
+      {/* Header stays at the top */}
+      <AppHeader email={user?.email ?? null} />
 
-      {/* Let each route (dashboard, lesson, etc.) control its own frame */}
-      {children}
-    </>
+      {/* Page body goes here */}
+      <div className="flex-1 flex flex-col">
+        {children}
+      </div>
+    </div>
   );
 }
