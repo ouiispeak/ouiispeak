@@ -6,17 +6,20 @@ import AppHeader from "@/components/AppHeader";
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const supabase = await createServerSupabase();
   const { data: { user } } = await supabase.auth.getUser();
-  
+
   if (!user) {
-    redirect('/auth');
+    redirect("/auth");
   }
 
   return (
-    <section className="min-h-screen bg-[#f6f5f3] text-[#222326]">
-      <AppHeader email={user?.email ?? null} />
-      <main className="px-6 pb-12">
-        {children}
-      </main>
-    </section>
+    <>
+      {/* Global header bar on beige background */}
+      <div className="bg-[#f6f5f3] text-[#222326]">
+        <AppHeader email={user?.email ?? null} />
+      </div>
+
+      {/* Let each route (dashboard, lesson, etc.) control its own frame */}
+      {children}
+    </>
   );
 }
