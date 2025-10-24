@@ -45,7 +45,7 @@ export default function LessonShell({ lessonSlug, slides }: Props) {
       </div>
 
       {/* SIDEBAR / TOOLS AREA */}
-      <aside className="w-full md:w-56 border-t md:border-t-0 md:border-l border-[#ddd] p-6 flex flex-col gap-4 text-sm text-center md:text-left">
+      <aside className="w-full md:w-56 border-t md:border-t-0 md:border-l border-[#ddd] p-6 flex flex-col gap-4 text-sm text-center md:text-left bg-white">
         {/* Module / lesson label */}
         <div>
           <div className="font-medium">
