@@ -1,8 +1,11 @@
 "use client";
 
 import React, { useRef } from "react";
-import LessonPlayer, { type LessonPlayerHandle, type Slide } from './LessonPlayer';
-import Link from 'next/link';
+import LessonPlayer, {
+  type LessonPlayerHandle,
+  type Slide,
+} from "./LessonPlayer";
+import Link from "next/link";
 
 type Props = {
   lessonSlug: string;
@@ -12,7 +15,7 @@ type Props = {
 export default function LessonShell({ lessonSlug, slides }: Props) {
   const playerRef = useRef<LessonPlayerHandle>(null);
 
-  const [moduleName, lessonName] = lessonSlug.split('/');
+  const [moduleName, lessonName] = lessonSlug.split("/");
 
   return (
     <div className="flex flex-col md:flex-row w-full h-full flex-1 text-[#222326] bg-white">
@@ -53,14 +56,12 @@ export default function LessonShell({ lessonSlug, slides }: Props) {
           p-6 flex flex-col gap-4 text-sm text-center md:text-left
         "
       >
-        {/* Module / lesson label */}
         <div className="font-medium">
           {moduleName} / {lessonName}
         </div>
 
         <hr className="border-[#ddd]" />
 
-        {/* Utility links / actions */}
         <button className="text-[#222326] hover:text-blue-600 hover:underline">
           Notes (présentes)
         </button>
