@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useRef } from 'react';
+import React, { useRef } from "react";
 import LessonPlayer, { type LessonPlayerHandle, type Slide } from './LessonPlayer';
 import Link from 'next/link';
 
@@ -12,46 +12,73 @@ type Props = {
 export default function LessonShell({ lessonSlug, slides }: Props) {
   const playerRef = useRef<LessonPlayerHandle>(null);
 
+  // Extract module and lesson names from slug
+  const [moduleName, lessonName] = lessonSlug.split('/');
+
   return (
-    <>
+    <div className="flex flex-col md:flex-row">
       {/* MAIN LESSON AREA */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 p-6 flex flex-col items-center text-center">
+        {/* This is where the actual lesson content / player goes */}
         <LessonPlayer
           ref={playerRef}
           lessonSlug={lessonSlug}
           slides={slides}
           hideInternalNav
         />
+
+        {/* Navigation at the BOTTOM of the main area */}
+        <div className="mt-6 flex items-center gap-4 text-sm">
+          <button 
+            onClick={() => playerRef.current?.prev()} 
+            className="underline hover:text-blue-600 hover:underline"
+          >
+            Précédent
+          </button>
+          <button 
+            onClick={() => playerRef.current?.next()} 
+            className="underline hover:text-blue-600 hover:underline"
+          >
+            Suivant
+          </button>
+        </div>
       </div>
 
       {/* SIDEBAR / TOOLS AREA */}
-      <aside className="w-full md:w-56 border-t md:border-t-0 md:border-l border-[#ddd] p-4 flex flex-col gap-3 text-sm">
-        <h3 className="font-medium text-[#222326] mb-2">Leçon</h3>
-        
-        <div className="flex flex-col gap-2">
-          <button 
-            onClick={() => playerRef.current?.prev()}
-            className="text-[#222326] hover:text-blue-600 hover:underline text-left"
-          >
-            ⬅️ Précédent
-          </button>
-          <button 
-            onClick={() => playerRef.current?.next()}
-            className="text-[#222326] hover:text-blue-600 hover:underline text-left"
-          >
-            Suivant ➡️
-          </button>
+      <aside className="w-full md:w-56 border-t md:border-t-0 md:border-l border-[#ddd] p-6 flex flex-col gap-4 text-sm text-center md:text-left">
+        {/* Module / lesson label */}
+        <div>
+          <div className="font-medium">
+            {moduleName} / {lessonName}
+          </div>
         </div>
 
-        <div className="border-t border-[#ddd] pt-3 mt-3">
-          <Link 
-            href="/lecons"
-            className="text-[#222326] hover:text-blue-600 hover:underline block"
-          >
-            💾 Enregistrer & Quitter
-          </Link>
-        </div>
+        <hr className="border-[#ddd]" />
+
+        {/* Utility links / actions */}
+        <button className="text-[#222326] hover:text-blue-600 hover:underline">
+          Notes (présentes)
+        </button>
+
+        <button className="text-[#222326] hover:text-blue-600 hover:underline">
+          Signet enregistré
+        </button>
+
+        <button className="text-[#222326] hover:text-blue-600 hover:underline">
+          Aide
+        </button>
+
+        <button className="text-[#222326] hover:text-blue-600 hover:underline">
+          Redémarrer
+        </button>
+
+        <Link 
+          href="/lecons"
+          className="text-[#222326] hover:text-blue-600 hover:underline"
+        >
+          Quitter
+        </Link>
       </aside>
-    </>
+    </div>
   );
 }
