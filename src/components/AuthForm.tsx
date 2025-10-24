@@ -9,6 +9,7 @@ export default function AuthForm() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -70,26 +71,35 @@ export default function AuthForm() {
         />
       </div>
 
-      {/* Password field */}
+      {/* Password field with show/hide */}
       <div className="mb-4">
         <label htmlFor="password" className="block text-sm mb-1">
           Mot de passe
         </label>
-        <input
-          id="password"
-          type="password"
-          className="w-full border border-[#ccc] rounded-md px-3 py-2 bg-white text-[#222326]"
-          placeholder="••••••••"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          disabled={loading}
-          required
-        />
+        <div className="relative">
+          <input
+            id="password"
+            type={showPassword ? 'text' : 'password'}
+            className="w-full border border-[#ccc] rounded-md px-3 py-2 pr-16 bg-white text-[#222326]"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={loading}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#222326] underline disabled:no-underline disabled:opacity-50"
+            disabled={loading}
+          >
+            {showPassword ? 'Masquer' : 'Afficher'}
+          </button>
+        </div>
       </div>
 
       {/* Action buttons */}
       <div className="flex flex-col gap-3 mt-6">
-        {/* Login first */}
         <button
           type="submit"
           disabled={loading}
@@ -98,7 +108,6 @@ export default function AuthForm() {
           Se connecter
         </button>
 
-        {/* Sign up second */}
         <button
           type="button"
           disabled={loading}
@@ -109,7 +118,6 @@ export default function AuthForm() {
         </button>
       </div>
 
-      {/* Message / feedback */}
       {msg && (
         <p className="text-sm mt-4 text-[#222326]">
           {msg}
