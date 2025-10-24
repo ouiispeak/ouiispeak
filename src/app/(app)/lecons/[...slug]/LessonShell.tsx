@@ -15,7 +15,7 @@ export default function LessonShell({ lessonSlug, slides }: Props) {
   const [moduleName, lessonName] = lessonSlug.split('/');
 
   return (
-    <div className="flex flex-col md:flex-row w-full h-full flex-1 text-[#222326]">
+    <div className="flex flex-col md:flex-row w-full h-full flex-1 text-[#222326] bg-white">
       {/* MAIN LESSON AREA */}
       <div className="flex-1 min-w-0 p-6 flex flex-col items-center text-center">
         <div className="w-full max-w-prose flex flex-col flex-1">
@@ -49,7 +49,7 @@ export default function LessonShell({ lessonSlug, slides }: Props) {
         className="
           w-full md:w-56
           border-t md:border-t-0 md:border-l border-[#ddd]
-          bg-[#f6f5f3]
+          bg-white
           p-6 flex flex-col gap-4 text-sm text-center md:text-left
         "
       >
