@@ -36,25 +36,5 @@ export default async function Page({ params }: { params: Params }) {
   const lessonSlug = params.slug.join('/');
   const slides = await getLessonContent(lessonSlug);
 
-  return (
-    <section className="bg-[#f6f5f3] text-[#222326] px-4 py-6 flex justify-center">
-      <div
-        className="
-          w-full
-          max-w-screen-lg
-          min-h-[98vh]
-          border border-[#ddd]
-          rounded-xl
-          bg-white
-          shadow-sm
-          overflow-hidden
-          flex
-          flex-col
-        "
-      >
-        {/* The shell handles internal layout (main content + sidebar) */}
-        <LessonShell lessonSlug={lessonSlug} slides={slides} />
-      </div>
-    </section>
-  );  
+  return <LessonShell lessonSlug={lessonSlug} slides={slides} />;
 }

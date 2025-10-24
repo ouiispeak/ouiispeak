@@ -9,7 +9,7 @@ export default function LessonLayout({ children }: { children: ReactNode }) {
           bg-white text-[#222326]
           border border-[#ddd] rounded-xl shadow-sm
           flex flex-col
-          min-h-[92vh]
+          h-[100vh]
           overflow-hidden
         "
       >

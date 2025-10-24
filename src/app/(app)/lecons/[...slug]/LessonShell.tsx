@@ -49,7 +49,7 @@ export default function LessonShell({ lessonSlug, slides }: Props) {
         className="
           w-full md:w-56
           border-t md:border-t-0 md:border-l border-[#ddd]
-          bg-white
+          bg-[#f6f5f3]
           p-6 flex flex-col gap-4 text-sm text-center md:text-left
         "
       >
