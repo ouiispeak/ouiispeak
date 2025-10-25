@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import { useLessonNotes } from "@/components/lesson/useLessonNotes";
 import { useLessonBookmarks } from "@/components/lesson/useLessonBookmarks";
 
@@ -19,25 +20,66 @@ export default function LessonSidebar({
   currentSlideId,
   onRestart 
 }: LessonSidebarProps) {
-  const { hasAny, add } = useLessonNotes(lessonSlug);
-  const { isBookmarked, add: addBookmark } = useLessonBookmarks(lessonSlug);
+  const { notes, hasAny, add, loading: notesLoading } = useLessonNotes(lessonSlug);
+  const { isBookmarked, add: addBookmark, loading: bookmarkLoading } = useLessonBookmarks(lessonSlug);
   
-  const handleNotes = () => {
-    // For now, just show a simple prompt
-    const content = prompt("Ajouter une note pour cette leçon:");
-    if (content && currentSlideId) {
-      add(content, currentSlideId);
+  // Local UI state
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [notesText, setNotesText] = useState('');
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [showRestartConfirm, setShowRestartConfirm] = useState(false);
+  
+  // Update notes text when notes change
+  useEffect(() => {
+    if (notes.length > 0) {
+      setNotesText(notes.map(n => n.content).join('\n\n'));
+    }
+  }, [notes]);
+  
+  const handleNotesToggle = () => {
+    setIsNotesOpen(!isNotesOpen);
+  };
+
+  const handleSaveNotes = async () => {
+    if (!notesText.trim() || !currentSlideId) return;
+    
+    setIsSavingNotes(true);
+    try {
+      await add(notesText.trim(), currentSlideId);
+      setIsNotesOpen(false);
+    } catch (error) {
+      console.error('Failed to save notes:', error);
+    } finally {
+      setIsSavingNotes(false);
     }
   };
 
-  const handleBookmark = () => {
-    if (currentSlideId) {
-      addBookmark(currentSlideId);
+  const handleBookmarkToggle = async () => {
+    if (!currentSlideId) return;
+    
+    try {
+      await addBookmark(currentSlideId);
+    } catch (error) {
+      console.error('Failed to toggle bookmark:', error);
     }
   };
 
-  const handleHelp = () => {
-    alert("Aide: Utilisez les boutons Précédent/Suivant pour naviguer dans la leçon. Ajoutez des notes et des signets pour vous aider à réviser.");
+  const handleHelpClick = () => {
+    setShowHelp(!showHelp);
+  };
+
+  const handleRestartClick = () => {
+    setShowRestartConfirm(true);
+  };
+
+  const handleRestartConfirm = () => {
+    onRestart?.();
+    setShowRestartConfirm(false);
+  };
+
+  const handleRestartCancel = () => {
+    setShowRestartConfirm(false);
   };
 
   return (
@@ -48,21 +90,84 @@ export default function LessonSidebar({
 
       <hr />
 
-      <button onClick={handleNotes}>
-        Notes {hasAny ? "(présentes)" : "(aucune)"}
-      </button>
+      {/* Notes Section */}
+      <div>
+        <button onClick={handleNotesToggle}>
+          Notes {hasAny ? "(présentes)" : "(aucune)"}
+        </button>
+        
+        {isNotesOpen && (
+          <div>
+            <textarea
+              value={notesText}
+              onChange={(e) => setNotesText(e.target.value)}
+              placeholder="Ajoutez vos notes ici..."
+              rows={4}
+            />
+            <div>
+              <button 
+                onClick={handleSaveNotes}
+                disabled={isSavingNotes || !notesText.trim()}
+              >
+                {isSavingNotes ? "Sauvegarde..." : "Sauvegarder"}
+              </button>
+              <button onClick={() => setIsNotesOpen(false)}>
+                Fermer
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
-      <button onClick={handleBookmark}>
-        {currentSlideId && isBookmarked(currentSlideId) ? "Signet enregistré ✓" : "Ajouter signet"}
-      </button>
+      {/* Bookmark Section */}
+      <div>
+        <button 
+          onClick={handleBookmarkToggle}
+          disabled={bookmarkLoading || !currentSlideId}
+        >
+          {currentSlideId && isBookmarked(currentSlideId) 
+            ? "Retirer le signet" 
+            : "Enregistrer le signet"
+          }
+        </button>
+      </div>
 
-      <button onClick={handleHelp}>
-        Aide
-      </button>
+      {/* Help Section */}
+      <div>
+        <button onClick={handleHelpClick}>
+          Aide
+        </button>
+        
+        {showHelp && (
+          <div>
+            Assistance intelligente arrive bientôt ✨
+            <button onClick={() => setShowHelp(false)}>
+              Fermer
+            </button>
+          </div>
+        )}
+      </div>
 
-      <button onClick={onRestart}>
-        Redémarrer
-      </button>
+      {/* Restart Section */}
+      <div>
+        <button onClick={handleRestartClick}>
+          Redémarrer
+        </button>
+        
+        {showRestartConfirm && (
+          <div>
+            Êtes-vous sûr ?
+            <div>
+              <button onClick={handleRestartConfirm}>
+                Oui
+              </button>
+              <button onClick={handleRestartCancel}>
+                Non
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       <Link href="/lecons">
         Quitter
