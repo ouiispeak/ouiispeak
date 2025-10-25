@@ -25,13 +25,13 @@ export default async function ActivitesPage() {
   const bookmarks = (data ?? []) as BmRow[];
 
   return (
-    <main style={{ padding: 16 }}>
+    <main>
       <h1>Activités — Signets</h1>
       {bookmarks.length === 0 && <p>Aucun signet pour le moment.</p>}
-      <ul style={{ paddingLeft: 18 }}>
+      <ul>
         {bookmarks.map(b => (
-          <li key={b.id} style={{ marginBottom: 10 }}>
-            <div style={{ fontSize: 12, color: '#6b7280' }}>
+          <li key={b.id}>
+            <div>
               {new Date(b.created_at).toLocaleString()} · diapo: {b.slide_id ?? '—'}
             </div>
             <Link href={`/lecons/${b.lesson_slug}?slide=${b.slide_id ?? ''}`}>

@@ -53,16 +53,16 @@ export default function AuthForm() {
   }
 
   return (
-    <form onSubmit={handleSignIn} className="text-[#222326]">
+    <form onSubmit={handleSignIn}>
       {/* Email field */}
-      <div className="mb-4">
-        <label htmlFor="email" className="block text-sm mb-1">
+      <div>
+        <label htmlFor="email">
           Email
         </label>
         <input
           id="email"
           type="email"
-          className="w-full border border-[#ccc] rounded-md px-3 py-2 bg-white text-[#222326]"
+          className="w-full"
           placeholder="email@exemple.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -72,15 +72,15 @@ export default function AuthForm() {
       </div>
 
       {/* Password field with show/hide */}
-      <div className="mb-4">
-        <label htmlFor="password" className="block text-sm mb-1">
+      <div>
+        <label htmlFor="password">
           Mot de passe
         </label>
         <div className="relative">
           <input
             id="password"
             type={showPassword ? 'text' : 'password'}
-            className="w-full border border-[#ccc] rounded-md px-3 py-2 pr-16 bg-white text-[#222326]"
+            className="w-full pr-16"
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -90,7 +90,7 @@ export default function AuthForm() {
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#222326] underline disabled:no-underline disabled:opacity-50"
+            className="absolute right-3 top-1/2 -translate-y-1/2 disabled:opacity-50"
             disabled={loading}
           >
             {showPassword ? 'Masquer' : 'Afficher'}
@@ -99,11 +99,11 @@ export default function AuthForm() {
       </div>
 
       {/* Action buttons */}
-      <div className="flex flex-col gap-3 mt-6">
+      <div className="flex flex-col">
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md py-2 px-4 font-medium text-white bg-[#222326] disabled:opacity-50"
+          className="w-full disabled:opacity-50"
         >
           Se connecter
         </button>
@@ -112,14 +112,14 @@ export default function AuthForm() {
           type="button"
           disabled={loading}
           onClick={handleSignUp}
-          className="w-full rounded-md py-2 px-4 font-medium text-[#222326] bg-[#f6f5f3] border border-[#222326]/20 disabled:opacity-50"
+          className="w-full disabled:opacity-50"
         >
           S'inscrire
         </button>
       </div>
 
       {msg && (
-        <p className="text-sm mt-4 text-[#222326]">
+        <p>
           {msg}
         </p>
       )}

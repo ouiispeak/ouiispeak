@@ -15,8 +15,8 @@ export const metadata: Metadata = { title: 'OuiiSpeak' };
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fr" className={atkinsonHyperlegible.variable}>
-      <body className="min-h-screen bg-background text-text">
-        <div className="min-h-screen px-6 py-8 md:px-16 md:py-12 lg:px-20 lg:py-16">
+      <body>
+        <div>
           {children}
         </div>
       </body>

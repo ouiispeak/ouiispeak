@@ -11,7 +11,7 @@ export default async function LessonsIndex() {
 
   // For now, show a single entry to our test lesson
   return (
-    <main style={{ padding: 16 }}>
+    <main>
       <h1>Leçons</h1>
       <ul>
         <li>

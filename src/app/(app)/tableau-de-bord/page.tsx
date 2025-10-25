@@ -57,24 +57,24 @@ export default async function TableauDeBordPage() {
   }
 
   return (
-    <main className="section">
-      <div className="container">
-        <h1 className="text-3xl font-bold mb-2">Tableau de bord</h1>
-        <p className="text-lg text-text/70 mb-8">Module : {module.title}</p>
-        <ol className="space-y-4">
+    <main>
+      <div>
+        <h1>Tableau de bord</h1>
+        <p>Module : {module.title}</p>
+        <ol>
           {view.map((v, idx) => {
             const requiredScore = v.lesson.required_score ?? 0;
             return (
-              <li key={v.lesson.id} className="p-4 bg-background border border-text/10 rounded-lg">
-                <div className="font-semibold text-lg mb-2">
+              <li key={v.lesson.id}>
+                <div>
                   {idx + 1}. {v.lesson.title}
                 </div>
-                <div className="text-sm text-text/70 space-y-1">
-                  <div>État : <span className="font-medium">{v.state}</span></div>
+                <div>
+                  <div>État : <span>{v.state}</span></div>
                   <div>{v.unlocked ? '🔓 Déverrouillé' : '🔒 Verrouillé'}</div>
-                  <div>Score requis : <span className="font-medium">{requiredScore}</span></div>
+                  <div>Score requis : <span>{requiredScore}</span></div>
                   {typeof v.progress?.score === 'number' && (
-                    <div>Score actuel : <span className="font-medium">{v.progress.score}</span></div>
+                    <div>Score actuel : <span>{v.progress.score}</span></div>
                   )}
                 </div>
               </li>

@@ -144,17 +144,17 @@ const LessonPlayer = forwardRef<LessonPlayerHandle, LessonPlayerProps>(
           return (
             <div>
               <p>{current.prompt}</p>
-              <div className="mt-4">
+              <div>
                 <textarea
                   value={noteContent}
                   onChange={(e) => setNoteContent(e.target.value)}
                   placeholder="Write your note here..."
-                  className="w-full min-h-[100px] p-2 border border-[#ddd] rounded-md"
+                  className="w-full min-h-[100px]"
                 />
                 <button
                   onClick={handleSaveNote}
                   disabled={!noteContent.trim()}
-                  className="mt-2 px-4 py-2 bg-blue-600 text-white border-none rounded-md cursor-pointer disabled:opacity-50"
+                  className="disabled:opacity-50"
                 >
                   Enregistrer la note
                 </button>
@@ -166,22 +166,21 @@ const LessonPlayer = forwardRef<LessonPlayerHandle, LessonPlayerProps>(
           return (
             <div>
               <p>{current.prompt}</p>
-              <div className="mt-4">
+              <div>
                 <input
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder="Type your answer here..."
-                  className="w-full p-2 border border-[#ddd] rounded-md mb-2"
+                  className="w-full"
                 />
                 <button
                   onClick={handleInputCheck}
-                  className="px-4 py-2 bg-green-600 text-white border-none rounded-md cursor-pointer"
                 >
                   Vérifier
                 </button>
                 {hasInputCheckPassed() && (
-                  <p className="text-green-600 mt-2">✓ Correct!</p>
+                  <p>✓ Correct!</p>
                 )}
               </div>
             </div>
@@ -199,13 +198,13 @@ const LessonPlayer = forwardRef<LessonPlayerHandle, LessonPlayerProps>(
       <div className="w-full flex flex-col">
         <div className="flex-1 overflow-auto">
           {current?.title && (
-            <h2 className="text-xl font-semibold mb-2">{current.title}</h2>
+            <h2>{current.title}</h2>
           )}
           <div>{renderSlideContent()}</div>
         </div>
 
         {!hideInternalNav && (
-          <div className="border-t p-3 flex justify-between">
+          <div className="border-t flex justify-between">
             <button onClick={prev} disabled={index === 0}>
               ← Précédent
             </button>

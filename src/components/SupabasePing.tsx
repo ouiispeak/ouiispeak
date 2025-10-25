@@ -26,5 +26,5 @@ export default function SupabasePing() {
     })();
   }, []);
 
-  return <p className="mt-4 text-sm text-gray-600">Supabase: {status}</p>;
+  return <p>Supabase: {status}</p>;
 }

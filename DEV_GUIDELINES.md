@@ -14,8 +14,8 @@ There are three layers involved in lesson pages:
 
 ### a. `page.tsx`
 - Owns the PAGE FRAME.
-- Sets the background color for the page (bg `#f6f5f3`), text color (`#222326`), outer padding.
-- Centers the main white card with `max-w-screen-lg`, border, rounded corners, shadow.
+- Sets the background color for the page, text color, outer padding.
+- Centers the main card with max-width, border, rounded corners, shadow.
 - DOES NOT implement lesson logic.
 
 ### b. `LessonShell.tsx`
@@ -76,14 +76,7 @@ This supports KISS.
 
 ## 4. Visual language (design tokens)
 
-Across the app we use:
-
-- Outside background (page background): `#f6f5f3`
-- Text color: `#222326`
-- Border color / dividers: `#ddd`
-- Card surface: `bg-white border border-[#ddd] rounded-xl shadow-sm`
-- Hover link state: `hover:text-blue-600 hover:underline`
-- Inputs: `border border-[#ddd] rounded-md px-3 py-2 bg-white text-[#222326]`
+Visual styling should be centralized in theme configuration files, not scattered across components.
 
 Do not invent new colors or shadows unless we explicitly decide.
 

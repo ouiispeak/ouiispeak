@@ -15,9 +15,9 @@ export default async function AuthPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-[#f6f5f3] text-[#222326] px-6 py-12">
-      <div className="w-full max-w-sm border border-[#ddd] rounded-xl bg-white text-[#222326] shadow-sm p-6">
-        <h1 className="text-lg font-medium mb-4">
+    <main className="min-h-screen flex items-center justify-center">
+      <div className="w-full max-w-sm">
+        <h1>
           Connexion / Inscription
         </h1>
 

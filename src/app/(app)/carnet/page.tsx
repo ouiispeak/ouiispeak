@@ -25,16 +25,16 @@ export default async function CarnetPage() {
 
   if (error) {
     return (
-      <main style={{ padding: 16 }}>
+      <main>
         <h1>Carnet</h1>
-        <p style={{ color: 'crimson' }}>Erreur: {error.message}</p>
+        <p>Erreur: {error.message}</p>
       </main>
     )
   }
 
   if (!notes || notes.length === 0) {
     return (
-      <main style={{ padding: 16 }}>
+      <main>
         <h1>Carnet</h1>
         <p>Aucune note pour le moment.</p>
       </main>
@@ -42,21 +42,21 @@ export default async function CarnetPage() {
   }
 
   return (
-    <main style={{ padding: 16 }}>
+    <main>
       <h1>Carnet</h1>
-      <ul style={{ listStyle: 'none', padding: 0, margin: '12px 0' }}>
+      <ul>
         {notes.map((n: NoteRow) => {
           const d = new Date(n.created_at)
           const pretty = d.toLocaleString()
           // Optional: deep link back to the lesson/slide if you have that route
           const href = `/lecons/${encodeURIComponent(n.lesson_slug)}${n.slide_id ? `#${encodeURIComponent(n.slide_id)}` : ''}`
           return (
-            <li key={n.id} style={{ border: '1px solid #eee', borderRadius: 8, padding: 12, marginBottom: 8 }}>
-              <div style={{ fontSize: 12, color: '#666', marginBottom: 6 }}>
+            <li key={n.id}>
+              <div>
                 {pretty} · {n.lesson_slug}{n.slide_id ? ` · ${n.slide_id}` : ''}
               </div>
-              <div style={{ whiteSpace: 'pre-wrap' }}>{n.content}</div>
-              <div style={{ marginTop: 8 }}>
+              <div>{n.content}</div>
+              <div>
                 <a href={href}>Ouvrir la leçon</a>
               </div>
             </li>

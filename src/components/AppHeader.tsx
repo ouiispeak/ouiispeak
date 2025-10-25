@@ -5,32 +5,32 @@ import LogoutButton from "@/components/LogoutButton";
 
 export default function AppHeader({ email }: { email: string | null }) {
   return (
-    <header className="w-full bg-[#f6f5f3] text-[#222326] border-b border-[#ddd] px-6 py-4 mb-8">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <header>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         {/* LEFT: Nav links for logged-in users */}
-        <nav className="flex flex-wrap items-center gap-6 md:gap-8 text-base">
-          <Link href="/tableau-de-bord" className="text-[#222326] hover:text-blue-600 hover:underline">
+        <nav className="flex flex-wrap items-center">
+          <Link href="/tableau-de-bord">
             Tableau de bord
           </Link>
-          <Link href="/lecons" className="text-[#222326] hover:text-blue-600 hover:underline">
+          <Link href="/lecons">
             Leçons
           </Link>
-          <Link href="/progression" className="text-[#222326] hover:text-blue-600 hover:underline">
+          <Link href="/progression">
             Progression
           </Link>
-          <Link href="/carnet" className="text-[#222326] hover:text-blue-600 hover:underline">
+          <Link href="/carnet">
             Carnet
           </Link>
-          <Link href="/activites" className="text-[#222326] hover:text-blue-600 hover:underline">
+          <Link href="/activites">
             Activités
           </Link>
-          <Link href="/compte" className="text-[#222326] hover:text-blue-600 hover:underline">
+          <Link href="/compte">
             Compte
           </Link>
         </nav>
 
         {/* RIGHT: User email + Logout */}
-        <div className="flex flex-wrap items-center gap-4 text-sm md:text-base">
+        <div className="flex flex-wrap items-center">
           {email && <span>{email}</span>}
           <LogoutButton />
         </div>
