@@ -28,6 +28,7 @@ type LessonPlayerProps = {
   slides: Slide[];
   hideInternalNav?: boolean;
   onReachEnd?: () => void;
+  onSlideChange?: (index: number) => void;
 };
 
 function normalize(s: string) {
@@ -40,7 +41,7 @@ function includesAllTokens(input: string, tokens: string[]) {
 }
 
 const LessonPlayer = forwardRef<LessonPlayerHandle, LessonPlayerProps>(
-  ({ lessonSlug, slides, hideInternalNav = false, onReachEnd }, ref) => {
+  ({ lessonSlug, slides, hideInternalNav = false, onReachEnd, onSlideChange }, ref) => {
     const router = useRouter();
     const [index, setIndex] = useState(0);
     const [noteContent, setNoteContent] = useState('');
@@ -84,16 +85,24 @@ const LessonPlayer = forwardRef<LessonPlayerHandle, LessonPlayerProps>(
       if (index < slides.length - 1) {
         const ni = index + 1;
         setIndex(ni);
+        onSlideChange?.(ni);
         if (ni === slides.length - 1) onReachEnd?.();
       }
     };
 
     const prev = () => {
-      if (index > 0) setIndex(index - 1);
+      if (index > 0) {
+        const ni = index - 1;
+        setIndex(ni);
+        onSlideChange?.(ni);
+      }
     };
 
     const goTo = (i: number) => {
-      if (i >= 0 && i < slides.length) setIndex(i);
+      if (i >= 0 && i < slides.length) {
+        setIndex(i);
+        onSlideChange?.(i);
+      }
     };
 
     const handleSaveNote = async () => {

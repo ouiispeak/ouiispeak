@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import LessonPlayer, {
   type LessonPlayerHandle,
   type Slide,
@@ -15,13 +15,29 @@ type Props = {
 
 export default function LessonShell({ lessonSlug, slides }: Props) {
   const playerRef = useRef<LessonPlayerHandle>(null);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   const [moduleName, lessonName] = lessonSlug.split("/");
+
+  const handleRestart = () => {
+    playerRef.current?.goTo(0);
+    setCurrentSlideIndex(0);
+  };
+
+  const handleSlideChange = (newIndex: number) => {
+    setCurrentSlideIndex(newIndex);
+  };
 
   return (
     <LessonLayout
       sidebar={
-        <LessonSidebar moduleName={moduleName} lessonName={lessonName} />
+        <LessonSidebar 
+          moduleName={moduleName} 
+          lessonName={lessonName}
+          lessonSlug={lessonSlug}
+          currentSlideId={slides[currentSlideIndex]?.id}
+          onRestart={handleRestart}
+        />
       }
     >
       <div className="w-full max-w-prose flex flex-col flex-1">
@@ -30,18 +46,25 @@ export default function LessonShell({ lessonSlug, slides }: Props) {
           lessonSlug={lessonSlug}
           slides={slides}
           hideInternalNav
+          onSlideChange={handleSlideChange}
         />
       </div>
 
       {/* Navigation under the lesson */}
       <div className="flex items-center">
         <button
-          onClick={() => playerRef.current?.prev()}
+          onClick={() => {
+            playerRef.current?.prev();
+            setCurrentSlideIndex(Math.max(0, currentSlideIndex - 1));
+          }}
         >
           Précédent
         </button>
         <button
-          onClick={() => playerRef.current?.next()}
+          onClick={() => {
+            playerRef.current?.next();
+            setCurrentSlideIndex(Math.min(slides.length - 1, currentSlideIndex + 1));
+          }}
         >
           Suivant
         </button>
