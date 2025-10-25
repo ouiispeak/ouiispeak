@@ -20,15 +20,31 @@ body {
   background-color: #fff;
 }
 
+/* Global page-level padding - breathing room from viewport edges */
+body > div {
+  padding: 1.5rem;
+}
+
 /* Comfortable spacing between vertical blocks */
 p, h1, h2, h3, h4, h5, h6 {
   margin-top: 0;
   margin-bottom: 1rem;
 }
 
+/* Spacing for lists */
+ul, ol {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
 /* Reasonable spacing for buttons and interactive elements */
 button, a {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Spacing for form elements */
+textarea, input {
+  margin-bottom: 0.75rem;
 }
 
 /* Prevent extremely long text lines on desktop */
@@ -38,9 +54,14 @@ main, section {
   padding: 1rem;
 }
 
-/* Global padding around page content */
-body > div {
-  padding: 1rem;
+/* Sidebar section spacing - visual separation between action groups */
+aside > * {
+  margin-bottom: 1rem;
+}
+
+/* Additional spacing for sidebar interactive elements */
+aside button, aside textarea, aside input, aside div {
+  margin-bottom: 0.5rem;
 }
 
 /* Accessible hover/focus states for interactive elements */
@@ -59,9 +80,4 @@ textarea, input {
   font-size: inherit;
   line-height: inherit;
   padding: 0.5rem;
-}
-
-/* Basic spacing for form elements */
-textarea, input, button {
-  margin-bottom: 0.5rem;
 }
