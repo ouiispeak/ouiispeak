@@ -40,7 +40,8 @@ export default function LessonShell({ lessonSlug, slides }: Props) {
         />
       }
     >
-      <div className="w-full max-w-prose flex flex-col flex-1">
+      {/* PURPLE: Lesson player container */}
+      <div className="w-full flex flex-col flex-1 p-4">
         <LessonPlayer
           ref={playerRef}
           lessonSlug={lessonSlug}
@@ -50,13 +51,14 @@ export default function LessonShell({ lessonSlug, slides }: Props) {
         />
       </div>
 
-      {/* Navigation under the lesson */}
-      <div className="flex items-center">
+      {/* INDIGO: Navigation under the lesson */}
+      <div className="flex items-center justify-between p-2">
         <button
           onClick={() => {
             playerRef.current?.prev();
             setCurrentSlideIndex(Math.max(0, currentSlideIndex - 1));
           }}
+          className="bg-[#edeae7] text-[#077373] rounded-md shadow-sm px-4 py-2 transition-all duration-200 hover:bg-[#d3e5de] hover:shadow-md active:bg-[#b8d3c8]"
         >
           Précédent
         </button>
@@ -65,6 +67,7 @@ export default function LessonShell({ lessonSlug, slides }: Props) {
             playerRef.current?.next();
             setCurrentSlideIndex(Math.min(slides.length - 1, currentSlideIndex + 1));
           }}
+          className="bg-[#edeae7] text-[#077373] rounded-md shadow-sm px-4 py-2 transition-all duration-200 hover:bg-[#d3e5de] hover:shadow-md active:bg-[#b8d3c8]"
         >
           Suivant
         </button>

@@ -92,8 +92,11 @@ export default function LessonSidebar({
 
       {/* Notes Section */}
       <div>
-        <button onClick={handleNotesToggle}>
-          Notes {hasAny ? "(présentes)" : "(aucune)"}
+        <button 
+          onClick={handleNotesToggle}
+          className="bg-[#edeae7] text-[#077373] rounded-md shadow-sm px-4 py-2 transition-all duration-200 hover:bg-[#d3e5de] hover:shadow-md active:bg-[#b8d3c8] w-full text-left"
+        >
+          Carnet
         </button>
         
         {isNotesOpen && (
@@ -124,6 +127,7 @@ export default function LessonSidebar({
         <button 
           onClick={handleBookmarkToggle}
           disabled={bookmarkLoading || !currentSlideId}
+          className="bg-[#edeae7] text-[#077373] rounded-md shadow-sm px-4 py-2 transition-all duration-200 hover:bg-[#d3e5de] hover:shadow-md active:bg-[#b8d3c8] w-full text-left disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {currentSlideId && isBookmarked(currentSlideId) 
             ? "Retirer le signet" 
@@ -134,8 +138,11 @@ export default function LessonSidebar({
 
       {/* Help Section */}
       <div>
-        <button onClick={handleHelpClick}>
-          Aide
+        <button 
+          onClick={handleHelpClick}
+          className="bg-[#edeae7] text-[#077373] rounded-md shadow-sm px-4 py-2 transition-all duration-200 hover:bg-[#d3e5de] hover:shadow-md active:bg-[#b8d3c8] w-full text-left"
+        >
+          Raichel
         </button>
         
         {showHelp && (
@@ -148,33 +155,39 @@ export default function LessonSidebar({
         )}
       </div>
 
-      {/* Restart Section */}
-      <div>
-        <button onClick={handleRestartClick}>
-          Redémarrer
-        </button>
-        
-        {showRestartConfirm && (
-          <div>
-            Êtes-vous sûr ?
+      {/* Bottom Section: Restart and Quit */}
+      <div className="mt-auto flex flex-col gap-4">
+
+        {/* Restart Section */}
+        <div>
+          <button 
+            onClick={handleRestartClick}
+            className="bg-[#edeae7] text-[#077373] rounded-md shadow-sm px-4 py-2 transition-all duration-200 hover:bg-[#d3e5de] hover:shadow-md active:bg-[#b8d3c8] w-full text-left"
+          >
+            Redémarrer
+          </button>
+          
+          {showRestartConfirm && (
             <div>
-              <button onClick={handleRestartConfirm}>
-                Oui
-              </button>
-              <button onClick={handleRestartCancel}>
-                Non
-              </button>
+              Êtes-vous sûr ?
+              <div>
+                <button onClick={handleRestartConfirm}>
+                  Oui
+                </button>
+                <button onClick={handleRestartCancel}>
+                  Non
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      <Link href="/lecons">
-        Quitter
-      </Link>
-
-      <div className="mt-auto">
-        Barre latérale · outils
+        <Link 
+          href="/lecons"
+          className="bg-[#edeae7] text-[#077373] rounded-md shadow-sm px-4 py-2 transition-all duration-200 hover:bg-[#d3e5de] hover:shadow-md active:bg-[#b8d3c8] block text-left no-underline"
+        >
+          Quitter
+        </Link>
       </div>
     </>
   );

@@ -9,20 +9,17 @@ export const metadata: Metadata = {
 
 export default async function AuthPage() {
   const supabase = await createServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   if (user) {
     redirect('/tableau-de-bord');
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center">
-      <div className="w-full max-w-sm">
-        <h1>
-          Connexion / Inscription
-        </h1>
-
-        <AuthForm />
-      </div>
+    <main>
+      <AuthForm />
     </main>
   );
 }

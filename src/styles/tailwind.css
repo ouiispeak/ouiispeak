@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+/* Tiny global base theme */
+@layer base {
+  html,
+  body {
+    background-color: #f6f5f3;  /* warm off-white */
+    color: #222326;             /* dark grey */
+    font-family: var(--font-sans), system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    color: #111;
+    line-height: 1.2;
+  }
+
+  h1 {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    margin-bottom: 1rem;
+  }
+
+  h2 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    margin-bottom: 0.75rem;
+  }
+
+  p {
+    margin-bottom: 1rem;
+    max-width: 65ch;
+  }
+}
+
+/* Disable scrolling and hide scrollbar on lesson pages only */
+body:has(.lesson-page) {
+  overflow: hidden;
+  /* Hide scrollbar for Webkit browsers (Chrome, Safari, Edge) */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+body:has(.lesson-page)::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+html:has(.lesson-page) {
+  overflow: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html:has(.lesson-page)::-webkit-scrollbar {
+  display: none;
+}

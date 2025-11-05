@@ -1,10 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Atkinson_Hyperlegible } from 'next/font/google';
-import './globals.css';
-// TEMPORARY: Readability layer for accessibility - removing this import will revert to unstyled/raw markup
-// Final product styling will eventually replace this file
-import './readability.css';
+import '@/styles/tailwind.css';
 
 const atkinsonHyperlegible = Atkinson_Hyperlegible({
   subsets: ['latin'],
@@ -18,11 +15,12 @@ export const metadata: Metadata = { title: 'OuiiSpeak' };
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fr" className={atkinsonHyperlegible.variable}>
-      <body>
-        <div>
-          {children}
-        </div>
-      </body>
+     <body className="bg-[#f6f5f3] text-[#222326] font-sans antialiased">
+  <div className="min-h-screen flex flex-col px-6 py-6 md:px-12 md:py-10">
+    {children}
+  </div>
+</body>
+
     </html>
   );
 }
