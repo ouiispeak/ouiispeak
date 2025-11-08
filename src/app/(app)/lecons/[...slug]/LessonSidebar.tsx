@@ -7,7 +7,7 @@ import { useLessonBookmarks } from "@/components/lesson/useLessonBookmarks";
 
 type LessonSidebarProps = {
   moduleName: string;
-  lessonName: string;
+  lessonName?: string | null;
   lessonSlug: string;
   currentSlideId?: string;
   onRestart?: () => void;
@@ -85,7 +85,7 @@ export default function LessonSidebar({
   return (
     <>
       <div>
-        {moduleName} / {lessonName}
+        {moduleName || 'Module inconnu'} / {lessonName ?? 'Leçon non configurée'}
       </div>
 
       <hr />

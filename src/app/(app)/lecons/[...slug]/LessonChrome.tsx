@@ -1,11 +1,11 @@
 import { ReactNode } from "react";
 
-type LessonLayoutProps = {
+type LessonChromeProps = {
   children: ReactNode;
   sidebar?: ReactNode;
 };
 
-export default function LessonLayout({ children, sidebar }: LessonLayoutProps) {
+export default function LessonChrome({ children, sidebar }: LessonChromeProps) {
   return (
     // PINK: overall lesson area – full width, ~95% viewport height
     <div className="w-full min-h-[85vh] flex bg-[#d9d3cc] rounded-md shadow-sm">
