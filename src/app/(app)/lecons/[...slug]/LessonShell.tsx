@@ -52,7 +52,7 @@ export default function LessonShell({ lessonSlug, slides }: Props) {
           lessonName={lessonName}
           lessonSlug={lessonSlug}
           currentSlideId={currentSlide?.id}
-          onRestart={handleRestart}
+          onRestartAction={handleRestart}
         />
       }
     >

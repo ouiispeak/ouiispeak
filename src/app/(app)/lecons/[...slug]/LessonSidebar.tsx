@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLessonNotes } from "@/components/lesson/useLessonNotes";
 import { useLessonBookmarks } from "@/components/lesson/useLessonBookmarks";
 
@@ -10,7 +10,7 @@ type LessonSidebarProps = {
   lessonName?: string | null;
   lessonSlug: string;
   currentSlideId?: string;
-  onRestart?: () => void;
+  onRestartAction?: () => void;
 };
 
 export default function LessonSidebar({ 
@@ -18,7 +18,7 @@ export default function LessonSidebar({
   lessonName, 
   lessonSlug, 
   currentSlideId,
-  onRestart 
+  onRestartAction 
 }: LessonSidebarProps) {
   const { notes, hasAny, add, loading: notesLoading } = useLessonNotes(lessonSlug);
   const { isBookmarked, add: addBookmark, loading: bookmarkLoading } = useLessonBookmarks(lessonSlug);
@@ -29,16 +29,36 @@ export default function LessonSidebar({
   const [isSavingNotes, setIsSavingNotes] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
+  const [isEditingNote, setIsEditingNote] = useState(false);
+
+  const currentSlideNote = useMemo(() => {
+    if (!currentSlideId) return null;
+    return notes.find(n => n.slide_id === currentSlideId) ?? null;
+  }, [notes, currentSlideId]);
   
-  // Update notes text when notes change
   useEffect(() => {
-    if (notes.length > 0) {
-      setNotesText(notes.map(n => n.content).join('\n\n'));
-    }
-  }, [notes]);
+    // When the slide changes, reset editing state so we can sync with stored note
+    setIsEditingNote(false);
+  }, [currentSlideId]);
+
+  // Keep the textarea in sync with the stored note only when the user isn't actively editing.
+  useEffect(() => {
+    if (isEditingNote) return;
+    if (!isNotesOpen) return;
+
+    setNotesText(currentSlideNote?.content ?? '');
+  }, [currentSlideNote, isEditingNote, isNotesOpen]);
   
   const handleNotesToggle = () => {
-    setIsNotesOpen(!isNotesOpen);
+    const nextOpen = !isNotesOpen;
+    setIsNotesOpen(nextOpen);
+
+    if (nextOpen) {
+      setIsEditingNote(false);
+      setNotesText(currentSlideNote?.content ?? '');
+    } else {
+      setIsEditingNote(false);
+    }
   };
 
   const handleSaveNotes = async () => {
@@ -48,6 +68,8 @@ export default function LessonSidebar({
     try {
       await add(notesText.trim(), currentSlideId);
       setIsNotesOpen(false);
+      setIsEditingNote(false);
+      setNotesText('');
     } catch (error) {
       console.error('Failed to save notes:', error);
     } finally {
@@ -74,7 +96,7 @@ export default function LessonSidebar({
   };
 
   const handleRestartConfirm = () => {
-    onRestart?.();
+    onRestartAction?.();
     setShowRestartConfirm(false);
   };
 
@@ -103,7 +125,12 @@ export default function LessonSidebar({
           <div>
             <textarea
               value={notesText}
-              onChange={(e) => setNotesText(e.target.value)}
+              onChange={(e) => {
+                if (!isEditingNote) {
+                  setIsEditingNote(true);
+                }
+                setNotesText(e.target.value);
+              }}
               placeholder="Ajoutez vos notes ici..."
               rows={4}
             />
