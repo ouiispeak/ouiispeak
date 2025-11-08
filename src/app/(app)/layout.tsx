@@ -1,41 +1,32 @@
-import type { ReactNode } from 'react';
-import { redirect } from 'next/navigation';
-import Link from 'next/link';
-import { createServerSupabase } from '../../lib/supabaseServer';
-import LogoutButton from '../../components/LogoutButton';
+import { ReactNode } from "react";
+import { redirect } from "next/navigation";
+import { createServerSupabase } from "@/lib/supabaseServer";
+import AppHeader from "@/components/AppHeader";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
+  // This layout wraps all AUTHENTICATED pages.
+  // It is NOT the root layout, so:
+  // - no <html> / <body> tags here
+  // - no globals.css import here
+
   const supabase = await createServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   if (!user) {
-    redirect('/auth');
+    redirect("/auth");
   }
 
   return (
-    <section>
-      <header style={{ padding: '12px 16px', borderBottom: '1px solid #ddd' }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '16px'
-        }}>
-          <nav style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <Link href="/tableau-de-bord">Tableau de bord</Link>
-            <Link href="/lecons">Leçons</Link>
-            <Link href="/progression">Progression</Link>
-            <Link href="/carnet">Carnet</Link>
-            <Link href="/activites">Activités</Link>
-            <Link href="/compte">Compte</Link>
-          </nav>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <span>{user.email}</span>
-            <LogoutButton />
-          </div>
-        </div>
-      </header>
-      {children}
-    </section>
+    <div className="min-h-screen flex flex-col">
+      {/* Header at the top of the private app */}
+      <AppHeader email={user?.email ?? null} />
+
+      {/* Page content area */}
+      <div className="flex-1 flex flex-col">
+        {children}
+      </div>
+    </div>
   );
 }

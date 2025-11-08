@@ -1,6 +1,12 @@
-import type { ReactNode } from 'react';
+import { ReactNode } from "react";
 
-export default function LessonGroupLayout({ children }: { children: ReactNode }) {
-  // No site header in lessons; the player itself handles the chrome
-  return <>{children}</>;
+export default function LessonLayout({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex flex-1 overflow-hidden lesson-page">
+      <div className="w-full max-w-none flex flex-col overflow-hidden">
+        {children}
+      </div>
+    </div>
+  );
 }
+

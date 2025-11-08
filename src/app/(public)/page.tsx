@@ -4,9 +4,22 @@ export const metadata: Metadata = { title: 'OuiiSpeak — Page de destination' }
 export default function LandingPage() {
   return (
     <main>
-      <h1>Page de destination</h1>
-      <p>Bienvenue sur OuiiSpeak.</p>
+      <div>
+        <div className="text-center max-w-3xl mx-auto">
+          <h1>OuiiSpeak</h1>
+          <p>Bienvenue sur votre plateforme d'apprentissage du français</p>
+          <div className="flex flex-col sm:flex-row justify-center">
+            <a href="/auth">
+              Commencer l'apprentissage
+            </a>
+            <a href="/a-propos">
+              En savoir plus
+            </a>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
+
 

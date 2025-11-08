@@ -57,23 +57,31 @@ export default async function TableauDeBordPage() {
   }
 
   return (
-    <main style={{ padding: 16 }}>
-      <h1>Tableau de bord</h1>
-      <p>Module : {module.title}</p>
-      <ol>
-        {view.map((v, idx) => {
-          const requiredScore = v.lesson.required_score ?? 0;
-          return (
-            <li key={v.lesson.id} style={{ marginBottom: 8 }}>
-              <strong>{idx + 1}. {v.lesson.title}</strong>
-              <div>
-                État : {v.state} · {v.unlocked ? 'déverrouillé' : 'verrouillé'} · score requis : {requiredScore}
-                {typeof v.progress?.score === 'number' ? ` · score : ${v.progress.score}` : null}
-              </div>
-            </li>
-          );
-        })}
-      </ol>
+    <main>
+      <div>
+        <h1>Tableau de bord</h1>
+        <p>Module : {module.title}</p>
+        <ol>
+          {view.map((v, idx) => {
+            const requiredScore = v.lesson.required_score ?? 0;
+            return (
+              <li key={v.lesson.id}>
+                <div>
+                  {idx + 1}. {v.lesson.title}
+                </div>
+                <div>
+                  <div>État : <span>{v.state}</span></div>
+                  <div>{v.unlocked ? '🔓 Déverrouillé' : '🔒 Verrouillé'}</div>
+                  <div>Score requis : <span>{requiredScore}</span></div>
+                  {typeof v.progress?.score === 'number' && (
+                    <div>Score actuel : <span>{v.progress.score}</span></div>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
     </main>
   );
 }

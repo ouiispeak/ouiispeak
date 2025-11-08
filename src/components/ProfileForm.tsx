@@ -86,24 +86,24 @@ const user = session.user;
   if (!profile) return null; // we redirected already
 
   return (
-    <form onSubmit={saveProfile} className="max-w-sm space-y-3">
+    <form onSubmit={saveProfile} className="max-w-sm">
       <div>
-        <label className="block text-sm mb-1">Email</label>
-        <input value={profile.email ?? ''} disabled className="w-full rounded border px-3 py-2 bg-gray-50" />
+        <label>Email</label>
+        <input value={profile.email ?? ''} disabled className="w-full" />
       </div>
       <div>
-        <label className="block text-sm mb-1">Full name</label>
+        <label>Full name</label>
         <input
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
           placeholder="Your name"
-          className="w-full rounded border px-3 py-2"
+          className="w-full"
         />
       </div>
-      <button type="submit" disabled={loading} className="rounded bg-black px-3 py-2 text-white disabled:opacity-60">
+      <button type="submit" disabled={loading} className="disabled:opacity-60">
         {loading ? 'Saving…' : 'Save profile'}
       </button>
-      {msg && <p className="text-sm">{msg}</p>}
+      {msg && <p>{msg}</p>}
     </form>
   );
 }
