@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createServerSupabase } from '@/lib/supabaseServer';
 import LessonShell from '@/app/(app)/lecons/[...slug]/LessonShell';
-import { type Slide } from '@/lessons/types';
+import { getSlidesForLesson } from '@/lessons/registry';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,8 +9,8 @@ type PageProps = {
   params: { module: string; lesson: string };
 };
 
-async function getLessonContent(): Promise<Slide[]> {
-  return [];
+function getLessonContent(slug: string) {
+  return getSlidesForLesson(slug);
 }
 
 export default async function LessonPage({ params }: PageProps) {
@@ -20,7 +20,7 @@ export default async function LessonPage({ params }: PageProps) {
 
   const { module, lesson } = params;
   const lessonSlug = `${module}/${lesson}` || 'templates/blank';
-  const slides = await getLessonContent();
+  const slides = getLessonContent(lessonSlug);
 
   return <LessonShell lessonSlug={lessonSlug} slides={slides} />;
 }

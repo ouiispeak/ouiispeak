@@ -79,6 +79,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true });
     } catch (supabaseError) {
       // Supabase not configured or call failed – treat as a no-op for now.
+      const reason =
+        supabaseError instanceof Error ? supabaseError.message : 'Unknown Supabase error';
+      console.warn('Supabase unavailable for lesson-progress:', reason);
       return NextResponse.json({ ok: true, skipped: 'supabase-unavailable' });
     }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

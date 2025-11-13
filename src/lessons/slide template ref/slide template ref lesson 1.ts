@@ -1,14 +1,15 @@
 import type { Slide } from '@/lessons/types';
 
-export const lessonSlug = 'a0-module-1/lesson-1';
+export const lessonSlug = 'slide-template-ref/lesson-1';
 
 export const slides: Slide[] = [
   {
     id: 'title',
     type: 'title-slide',
     props: {
-      title: 'A0 · Module 1',
-      subtitle: 'Leçon 1',
+      title: 'Slide Template Ref',
+      subtitle: 'Lesson 1',
     },
   },
 ];
+

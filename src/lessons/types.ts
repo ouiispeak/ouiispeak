@@ -1,8 +1,63 @@
-export type Slide = {
-  id: string;
-  title?: string;
-  subtitle?: string;
-  content?: string;
-  html?: string;
-  metadata?: Record<string, unknown>;
+import type { SlideType } from '@/components/slides';
+import type { SupportedLang } from '@/lib/voices';
+
+export type SpeechMode = 'tts' | 'file';
+
+export type SpeechContent = {
+  mode: SpeechMode;
+  lang?: SupportedLang;
+  text?: string;
+  fileUrl?: string;
 };
+
+export type SpeakableSegment = {
+  text: string;
+  lang?: SupportedLang;
+};
+
+export type AiSpeakRepeatCell = {
+  label: string;
+  speech: SpeechContent;
+};
+
+export type AiSpeakRepeatSlideProps = {
+  title: string;
+  subtitle?: string;
+  note?: string;
+  defaultLang?: SupportedLang;
+  lines: AiSpeakRepeatCell[][];
+  gapClass?: string;
+};
+
+export type AiSpeakStudentRepeatSlideProps = {
+  title: string;
+  instructions?: string;
+  samplePrompt: string;
+  promptLabel?: string;
+  referenceText?: string;
+};
+
+export type PronunciationSlideProps = {
+  referenceText: string;
+  prompt?: string;
+};
+
+type BaseSlide<T extends SlideType, P> = {
+  id: string;
+  type: T;
+  props: P;
+};
+
+type AiSpeakRepeatSlide = BaseSlide<'ai-speak-repeat', AiSpeakRepeatSlideProps>;
+type AiSpeakStudentRepeatSlide = BaseSlide<
+  'ai-speak-student-repeat',
+  AiSpeakStudentRepeatSlideProps
+>;
+type PronunciationSlide = BaseSlide<'pronunciation', PronunciationSlideProps>;
+
+type RemainingSlide = BaseSlide<
+  Exclude<SlideType, 'ai-speak-repeat' | 'ai-speak-student-repeat' | 'pronunciation'>,
+  Record<string, unknown>
+>;
+
+export type Slide = AiSpeakRepeatSlide | AiSpeakStudentRepeatSlide | PronunciationSlide | RemainingSlide;

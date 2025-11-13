@@ -85,7 +85,8 @@ for (const file of requiredFiles) {
     readFileSync(join(PROJECT_ROOT, file), 'utf8');
     console.log(`✅ ${file}`);
   } catch (error) {
-    console.error(`❌ Missing: ${file}`);
+    const reason = error instanceof Error ? error.message : String(error);
+    console.error(`❌ Missing: ${file} (${reason})`);
     allFilesExist = false;
   }
 }

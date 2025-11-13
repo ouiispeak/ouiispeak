@@ -37,7 +37,7 @@ async function populateLessons() {
   for (const lesson of lessons) {
     console.log(`\nInserting lesson: ${lesson.slug} (${lesson.title})`);
     
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('lessons')
       .upsert({
         slug: lesson.slug,

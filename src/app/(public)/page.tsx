@@ -7,10 +7,10 @@ export default function LandingPage() {
       <div>
         <div className="text-center max-w-3xl mx-auto">
           <h1>OuiiSpeak</h1>
-          <p>Bienvenue sur votre plateforme d'apprentissage du français</p>
+          <p>Bienvenue sur votre plateforme d&rsquo;apprentissage du français</p>
           <div className="flex flex-col sm:flex-row justify-center">
             <a href="/auth">
-              Commencer l'apprentissage
+              Commencer l&rsquo;apprentissage
             </a>
             <a href="/a-propos">
               En savoir plus
@@ -21,5 +21,4 @@ export default function LandingPage() {
     </main>
   );
 }
-
 

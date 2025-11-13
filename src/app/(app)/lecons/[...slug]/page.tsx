@@ -1,15 +1,14 @@
 import type { Metadata } from 'next';
 import LessonShell from './LessonShell';
-import { type Slide } from '@/lessons/types';
+import { getSlidesForLesson } from '@/lessons/registry';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Lecture de la leçon' };
 
 type Params = { slug: string[] };
 
-async function getLessonContent(): Promise<Slide[]> {
-  // Starting from an empty state so new templates can be added later.
-  return [];
+function getLessonContent(slug: string) {
+  return getSlidesForLesson(slug);
 }
 
 export default async function Page({ params }: { params: Params }) {
@@ -22,8 +21,7 @@ export default async function Page({ params }: { params: Params }) {
 
   const lessonSlug = rawLessonSlug || 'templates/blank';
 
-  const slides = await getLessonContent();
+  const slides = getLessonContent(lessonSlug);
 
   return <LessonShell lessonSlug={lessonSlug} slides={slides} />;
 }
-

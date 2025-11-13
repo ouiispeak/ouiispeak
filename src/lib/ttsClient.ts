@@ -8,7 +8,7 @@
 export async function fetchTtsAudio(
   text: string,
   options?: { voiceId?: string; languageCode?: string }
-): Promise<string> {
+): Promise<Blob> {
   const res = await fetch('/api/tts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -23,7 +23,7 @@ export async function fetchTtsAudio(
     throw new Error('TTS request failed');
   }
 
-  const data = (await res.json()) as { audioUrl: string };
-  return data.audioUrl;
+  const buffer = await res.arrayBuffer();
+  const contentType = res.headers.get('Content-Type') ?? 'audio/mpeg';
+  return new Blob([buffer], { type: contentType });
 }
-
