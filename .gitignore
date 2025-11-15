@@ -42,3 +42,7 @@ next-env.d.ts
 .env.local
 
 *.zip
+
+# Ignore whisper virtualenv
+whisper/.venv/
+
