@@ -10,7 +10,7 @@ type ContentBoxProps = {
 
 export default function ContentBox({ children, className }: ContentBoxProps) {
   return (
-    <PaperCard className={['inline-block max-w-full px-6 py-4 text-[1.5em] leading-relaxed text-[#192026]', className]
+    <PaperCard className={['inline-block max-w-full px-6 py-4 text-[1.25em] leading-relaxed text-[#192026]', className]
       .filter(Boolean)
       .join(' ')}>
       {children}

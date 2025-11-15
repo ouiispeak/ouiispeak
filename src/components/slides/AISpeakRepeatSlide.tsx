@@ -337,16 +337,19 @@ export default function AISpeakRepeatSlide({
   );
 
   return (
-    <div className="flex h-full w-full flex-col px-6 py-10">
+    <div className="flex h-full w-full flex-col px-6 py-10 leading-relaxed md:leading-loose pt-2 md:pt-4">
+      <p className="text-base font-semibold mb-4 text-[#192026]">
+        Ta mission : écoute et répète chaque élément.
+      </p>
       {note && (
         <div className="mb-4 self-start text-left">
           <ContentBox className="text-base">{note}</ContentBox>
         </div>
       )}
       <div className="mx-auto flex max-w-3xl flex-col items-center text-center text-[#192026]">
-        {title && <h2 className="mb-2 text-3xl font-semibold">{title}</h2>}
-        {subtitle && <p className="text-lg text-[#192026]/80">{subtitle}</p>}
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        {title && <h2 className="mb-4 md:mb-6 text-3xl font-semibold text-balance">{title}</h2>}
+        {subtitle && <p className="mb-4 md:mb-5 text-lg text-[#192026]/80 text-balance">{subtitle}</p>}
+        {error && <p className="mb-4 md:mb-5 mt-2 text-sm text-[#8b6a2b] bg-amber-50 px-3 py-2 rounded-md">{error}</p>}
       </div>
 
       <div className="flex flex-1 flex-col">
@@ -368,7 +371,7 @@ export default function AISpeakRepeatSlide({
                     key={`${cell.label}-${globalIndex}`}
                     className={`flex h-16 w-16 items-center justify-center text-center text-[2em] ${colorClass} ${
                       isButton
-                        ? 'cursor-pointer transition-colors duration-200 hover:bg-[#f6f5f3]'
+                        ? 'cursor-pointer transition-colors duration-200 hover:bg-[#e8e5e1] focus:outline-none focus:ring-2 focus:ring-[#cfcac5] focus:ring-offset-2 focus:ring-offset-transparent'
                         : ''
                     }`}
                     role={isButton ? 'button' : undefined}

@@ -14,7 +14,7 @@ const iconProps: SVGProps<SVGSVGElement> = {
   strokeWidth: 2,
   strokeLinecap: "round",
   strokeLinejoin: "round",
-  className: "h-5 w-5",
+  className: "h-5 w-5 opacity-70 hover:opacity-100 transition-opacity duration-200",
   "aria-hidden": true,
 };
 
@@ -57,12 +57,61 @@ const ExitIcon = () => (
   </svg>
 );
 
+const EyeIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-4 w-4 opacity-70 group-hover:opacity-100 transition-opacity duration-200"
+    aria-hidden={true}
+  >
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+const ChevronLeftIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-4 w-4 opacity-70 group-hover:opacity-100 transition-opacity duration-200"
+    aria-hidden={true}
+  >
+    <path d="m15 18-6-6 6-6" />
+  </svg>
+);
+
+const ChevronRightIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-4 w-4 opacity-70 group-hover:opacity-100 transition-opacity duration-200"
+    aria-hidden={true}
+  >
+    <path d="m9 18 6-6-6-6" />
+  </svg>
+);
+
 type LessonSidebarProps = {
   moduleName: string;
   lessonName?: string | null;
   lessonSlug: string;
   currentSlideId?: string;
   onRestartAction?: () => void;
+  sidebarState?: 'full' | 'collapsed' | 'hidden';
+  onSidebarStateChange?: (next: 'full' | 'collapsed' | 'hidden') => void;
+  lastVisibleSidebarState?: 'full' | 'collapsed';
 };
 
 export default function LessonSidebar({
@@ -71,7 +120,11 @@ export default function LessonSidebar({
   lessonSlug,
   currentSlideId,
   onRestartAction,
+  sidebarState,
+  onSidebarStateChange,
+  lastVisibleSidebarState,
 }: LessonSidebarProps) {
+  const effectiveSidebarState = sidebarState ?? 'full';
   const router = useRouter();
   const { notes, add, loading: notesLoading } = useLessonNotes(lessonSlug);
   const { isBookmarked, add: addBookmark, loading: bookmarkLoading } = useLessonBookmarks(lessonSlug);
@@ -161,12 +214,47 @@ export default function LessonSidebar({
     router.push("/lecons");
   };
 
+  const isFull = effectiveSidebarState === 'full';
+  const isCollapsed = effectiveSidebarState === 'collapsed';
+  const showLabels = isFull;
+  const iconLayoutClass = isFull
+    ? 'flex w-full items-center gap-3 text-left'
+    : 'flex flex-col items-center gap-1 text-center';
+  const sectionAlignmentClass = isFull ? 'items-start' : 'items-center';
+
+  // Early return for hidden state – use the remembered visible state
+  if (effectiveSidebarState === 'hidden') {
+    const restoreTarget =
+      lastVisibleSidebarState === 'full' || lastVisibleSidebarState === 'collapsed'
+        ? lastVisibleSidebarState
+        : 'full';
+
+    return (
+      <div className="group flex h-full w-full items-center justify-end">
+        {onSidebarStateChange && (
+          <button
+            type="button"
+            onClick={() => onSidebarStateChange(restoreTarget)}
+            className="h-24 w-3 rounded-r-full bg-[#e0ddd8] hover:bg-[#d7d3cd] transition-colors duration-200"
+            aria-label="Afficher les outils"
+          />
+        )}
+      </div>
+    );
+  }
+
+  // MAIN return for 'full' and 'collapsed'
   return (
     <div className="flex h-full w-full">
-      <div className="flex w-full justify-between gap-6 md:h-full md:flex-col md:items-center md:justify-between md:gap-8">
-        <div className="flex flex-col items-center gap-4">
-          <div className="flex flex-col items-center gap-3">
-            <div className="flex items-center justify-center">
+      <div
+        className={[
+          'flex w-full justify-between gap-6 md:h-full md:flex-col md:justify-between md:gap-8',
+          isCollapsed ? 'items-start md:items-start' : 'items-center md:items-center',
+        ].join(' ')}
+      >
+        <div className={`flex w-full flex-col ${sectionAlignmentClass} gap-4`}>
+          <div className={`flex w-full flex-col ${sectionAlignmentClass} gap-3`}>
+            <div className={iconLayoutClass}>
               <SoftIconButton
                 ariaLabel={isNotesOpen ? "Fermer le carnet" : "Ouvrir le carnet"}
                 onClick={handleNotesToggle}
@@ -174,8 +262,18 @@ export default function LessonSidebar({
               >
                 <NotebookIcon />
               </SoftIconButton>
+              {showLabels && (
+                <span
+                  className={[
+                    'text-xs text-[#4b4842]',
+                    isFull ? 'whitespace-nowrap text-left' : '',
+                  ].join(' ')}
+                >
+                  Journal
+                </span>
+              )}
             </div>
-            {isNotesOpen && (
+            {effectiveSidebarState === 'full' && isNotesOpen && (
               <div className="w-full space-y-2 md:w-48">
                 <textarea
                   value={notesText}
@@ -193,13 +291,13 @@ export default function LessonSidebar({
                   <button
                     onClick={handleSaveNotes}
                     disabled={isSavingNotes || !notesText.trim()}
-                    className="rounded-md bg-[#077373] px-3 py-1 text-white disabled:opacity-50"
+                    className="rounded-xl px-6 py-3 bg-[#e8e5e1] text-[#222326] hover:bg-[#e1ded9] transition-colors duration-200 disabled:opacity-50"
                   >
                     {isSavingNotes ? "Sauvegarde..." : "Sauvegarder"}
                   </button>
                   <button
                     onClick={() => setIsNotesOpen(false)}
-                    className="rounded-md border border-[#077373] px-3 py-1 text-[#077373]"
+                    className="rounded-xl px-6 py-3 bg-[#e8e5e1] text-[#222326] hover:bg-[#e1ded9] transition-colors duration-200"
                   >
                     Fermer
                   </button>
@@ -208,7 +306,7 @@ export default function LessonSidebar({
             )}
           </div>
 
-          <div className="flex items-center justify-center">
+          <div className={iconLayoutClass}>
             <SoftIconButton
               ariaLabel={
                 currentSlideId && isBookmarked(currentSlideId)
@@ -220,20 +318,40 @@ export default function LessonSidebar({
             >
               <BookmarkIcon />
             </SoftIconButton>
+            {showLabels && (
+              <span
+                className={[
+                  'text-xs text-[#4b4842]',
+                  isFull ? 'whitespace-nowrap text-left' : '',
+                ].join(' ')}
+              >
+                Favoris
+              </span>
+            )}
           </div>
 
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center justify-center">
+          <div className={`flex w-full flex-col ${sectionAlignmentClass} gap-2`}>
+            <div className={iconLayoutClass}>
               <SoftIconButton ariaLabel="Raichel" onClick={handleHelpClick}>
                 <BrainIcon />
               </SoftIconButton>
+              {showLabels && (
+                <span
+                  className={[
+                    'text-xs text-[#4b4842]',
+                    isFull ? 'whitespace-nowrap text-left' : '',
+                  ].join(' ')}
+                >
+                  Aide
+                </span>
+              )}
             </div>
-            {showHelp && (
+            {effectiveSidebarState === 'full' && showHelp && (
               <div className="w-full rounded-md bg-[#f6f5f3] p-3 text-sm text-[#333] md:w-auto">
                 Assistance intelligente arrive bientôt ✨
                 <button
                   onClick={() => setShowHelp(false)}
-                  className="mt-2 rounded-md border border-[#077373] px-3 py-1 text-[#077373]"
+                  className="mt-2 rounded-xl px-6 py-3 bg-[#e8e5e1] text-[#222326] hover:bg-[#e1ded9] transition-colors duration-200"
                 >
                   Fermer
                 </button>
@@ -242,32 +360,102 @@ export default function LessonSidebar({
           </div>
         </div>
 
-        <div className="flex flex-col items-center gap-4">
-          <div className="flex items-center justify-center">
+        <div className={`flex w-full flex-col ${sectionAlignmentClass} gap-4`}>
+          {onSidebarStateChange && (
+            <div className={`flex w-full flex-col ${sectionAlignmentClass} gap-2`}>
+              <div className={iconLayoutClass}>
+                <SoftIconButton
+                  ariaLabel={
+                    effectiveSidebarState === 'full'
+                      ? 'Réduire la barre latérale'
+                      : 'Développer la barre latérale'
+                  }
+                  onClick={() =>
+                    onSidebarStateChange(
+                      effectiveSidebarState === 'full' ? 'collapsed' : 'full'
+                    )
+                  }
+                >
+                  {effectiveSidebarState === 'full' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+                </SoftIconButton>
+                {showLabels && (
+                  <span
+                    className={[
+                      'text-xs text-[#4b4842]',
+                      isFull ? 'whitespace-nowrap text-left' : '',
+                    ].join(' ')}
+                  >
+                    {effectiveSidebarState === 'full' ? 'Réduire' : 'Développer'}
+                  </span>
+                )}
+              </div>
+
+              <div className={iconLayoutClass}>
+                <SoftIconButton
+                  ariaLabel="Masquer les outils"
+                  onClick={() => onSidebarStateChange('hidden')}
+                >
+                  <EyeIcon />
+                </SoftIconButton>
+                {showLabels && (
+                  <span
+                    className={[
+                      'text-xs text-[#4b4842]',
+                      isFull ? 'whitespace-nowrap text-left' : '',
+                    ].join(' ')}
+                  >
+                    Masquer
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className={iconLayoutClass}>
             <SoftIconButton ariaLabel="Redémarrer la leçon" onClick={handleRestartClick}>
               <RotateCcwIcon />
             </SoftIconButton>
+            {showLabels && (
+              <span
+                className={[
+                  'text-xs text-[#4b4842]',
+                  isFull ? 'whitespace-nowrap text-left' : '',
+                ].join(' ')}
+              >
+                Recommencer
+              </span>
+            )}
           </div>
 
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center justify-center">
+          <div className={`flex w-full flex-col ${sectionAlignmentClass} gap-2`}>
+            <div className={iconLayoutClass}>
               <SoftIconButton ariaLabel="Quitter la leçon" onClick={handleQuit}>
                 <ExitIcon />
               </SoftIconButton>
+              {showLabels && (
+                <span
+                  className={[
+                    'text-xs text-[#4b4842]',
+                    isFull ? 'whitespace-nowrap text-left' : '',
+                  ].join(' ')}
+                >
+                  Quitter
+                </span>
+              )}
             </div>
-            {showRestartConfirm && (
+            {effectiveSidebarState === 'full' && showRestartConfirm && (
               <div className="w-full rounded-md bg-[#fff7ed] p-3 text-center text-sm text-[#92400e] md:w-auto">
                 Êtes-vous sûr ?
                 <div className="mt-2 flex justify-center gap-2">
                   <button
                     onClick={handleRestartConfirm}
-                    className="rounded-md bg-[#077373] px-3 py-1 text-white"
+                    className="rounded-xl px-6 py-3 bg-[#e8e5e1] text-[#222326] hover:bg-[#e1ded9] transition-colors duration-200"
                   >
                     Oui
                   </button>
                   <button
                     onClick={handleRestartCancel}
-                    className="rounded-md border border-[#077373] px-3 py-1 text-[#077373]"
+                    className="rounded-xl px-6 py-3 bg-[#e8e5e1] text-[#222326] hover:bg-[#e1ded9] transition-colors duration-200"
                   >
                     Non
                   </button>

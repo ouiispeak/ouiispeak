@@ -37,17 +37,17 @@ export default function TextSlide({
     );
 
   return (
-    <div className="flex h-full w-full items-center justify-center px-6 py-10">
+    <div className="flex h-full w-full items-center px-6 py-10 leading-relaxed md:leading-loose pt-2 md:pt-4">
       <div className="flex max-w-full flex-col items-center text-center text-[#192026]">
-        {title && <h2 className="mb-2 text-[1.5em] font-semibold">{title}</h2>}
-        {subtitle && <p className="mb-6 text-[1.2em] text-[#192026]/80">{subtitle}</p>}
+        {title && <h2 className="mb-4 md:mb-6 text-[1.5em] font-semibold text-balance">{title}</h2>}
+        {subtitle && <p className="mb-4 md:mb-5 text-[1.2em] text-[#192026]/80 text-balance">{subtitle}</p>}
 
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-4 mt-2 md:mt-3">
           {contentBlocks.map((content, index) => (
             <div key={index} className="flex w-full justify-center">
               <ContentBox>
                 {splitIntoLines(content).map((line, lineIndex) => (
-                  <p key={lineIndex}>{line}</p>
+                  <p key={lineIndex} className="mb-4 md:mb-5">{line}</p>
                 ))}
               </ContentBox>
             </div>

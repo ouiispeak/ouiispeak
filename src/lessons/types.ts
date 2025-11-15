@@ -37,11 +37,6 @@ export type AiSpeakStudentRepeatSlideProps = {
   referenceText?: string;
 };
 
-export type PronunciationSlideProps = {
-  referenceText: string;
-  prompt?: string;
-};
-
 type BaseSlide<T extends SlideType, P> = {
   id: string;
   type: T;
@@ -53,11 +48,10 @@ type AiSpeakStudentRepeatSlide = BaseSlide<
   'ai-speak-student-repeat',
   AiSpeakStudentRepeatSlideProps
 >;
-type PronunciationSlide = BaseSlide<'pronunciation', PronunciationSlideProps>;
 
 type RemainingSlide = BaseSlide<
-  Exclude<SlideType, 'ai-speak-repeat' | 'ai-speak-student-repeat' | 'pronunciation'>,
+  Exclude<SlideType, 'ai-speak-repeat' | 'ai-speak-student-repeat'>,
   Record<string, unknown>
 >;
 
-export type Slide = AiSpeakRepeatSlide | AiSpeakStudentRepeatSlide | PronunciationSlide | RemainingSlide;
+export type Slide = AiSpeakRepeatSlide | AiSpeakStudentRepeatSlide | RemainingSlide;

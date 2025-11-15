@@ -97,42 +97,40 @@ export function OpenSourcePronunciation({ referenceText, showReferenceLabel = tr
   return (
     <div className="flex flex-col gap-3">
       {showReferenceLabel && (
-        <p className="text-sm text-gray-700">
+        <p className="mb-4 md:mb-5 text-sm text-gray-700">
           Repeat: <span className="font-semibold">{referenceText}</span>
         </p>
       )}
 
-      <button
-        type="button"
-        onClick={isRecording ? stopRecording : startRecording}
-        className={`rounded-full px-4 py-2 text-sm font-semibold ${
-          isRecording ? 'bg-red-500 text-white' : 'bg-emerald-600 text-white'
-        }`}
-      >
-        {isRecording ? 'Stop' : 'Record'}
-      </button>
+      <div className="mt-4 md:mt-6 mb-2">
+        <button
+          type="button"
+          onClick={isRecording ? stopRecording : startRecording}
+          className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200 hover:bg-[#e8e5e1] focus:outline-none focus:ring-2 focus:ring-[#cfcac5] focus:ring-offset-2 focus:ring-offset-transparent ${
+            isRecording ? 'bg-red-500 text-white' : 'bg-emerald-600 text-white'
+          }`}
+        >
+          {isRecording ? 'Stop' : 'Record'}
+        </button>
+      </div>
 
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="mb-4 md:mb-5 text-xs text-red-600">{error}</p>}
 
       {score != null && (
         <div className="rounded-xl bg-white/70 p-3 text-sm shadow-sm">
-          <p className="font-semibold">
+          <p className="mb-3 font-semibold text-[#3b3a37]">
             Score: {Math.round(score)} / 100
           </p>
           {transcript && (
-            <p className="mt-1 text-xs text-gray-700">
+            <p className="text-base text-[#4a4945] leading-relaxed mb-4">
               You said: &ldquo;{transcript}&rdquo;
             </p>
           )}
-          <div className="mt-2 flex flex-wrap gap-1 text-xs">
+          <div className="mt-2 flex flex-wrap text-xs">
             {words.map((w, i) => (
               <span
                 key={i}
-                className={`rounded-full px-2 py-1 ${
-                  w.correct
-                    ? 'bg-emerald-100 text-emerald-800'
-                    : 'bg-red-100 text-red-800'
-                }`}
+                className="inline-block px-3 py-1 rounded-full bg-[#ece9e6] text-[#494843] text-sm mr-2 mb-2"
               >
                 {w.reference}
               </span>

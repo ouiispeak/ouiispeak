@@ -32,7 +32,7 @@ import { memo } from "react";
          aria-valuemax={100}
          aria-valuenow={roundedPercent}
        >
-         <div className="h-2 w-full overflow-hidden rounded-full bg-[#e5e2df]">
+         <div className="h-3 md:h-3.5 py-1 w-full overflow-hidden rounded-full bg-[#e5e2df]">
            <div
              className="h-2 rounded-full bg-[#2E8C8C] transition-all duration-500 ease-out motion-reduce:transition-none"
              style={{ width: `${percent}%` }}

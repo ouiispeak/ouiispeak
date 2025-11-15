@@ -11,7 +11,12 @@ from faster_whisper import WhisperModel
 WHISPER_MODEL = os.getenv("WHISPER_MODEL", "small")
 WHISPER_COMPUTE_TYPE = os.getenv("WHISPER_COMPUTE_TYPE", "int8_float16")
 WHISPER_DEVICE = os.getenv("WHISPER_DEVICE", "auto")
-FORCED_LANGUAGE = os.getenv("WHISPER_LANGUAGE")
+_configured_language = os.getenv("WHISPER_LANGUAGE")
+FORCED_LANGUAGE = (
+    None
+    if (_configured_language or "").lower() == "auto"
+    else (_configured_language or "en")
+)
 
 app = FastAPI(title="OuiiSpeak Whisper Gateway")
 app.add_middleware(

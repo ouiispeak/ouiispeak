@@ -63,19 +63,18 @@ export default function LessonPlayer({ slides }: LessonPlayerProps) {
   const nextDisabled = safeIndex >= slides.length - 1;
 
   return (
-    <section className="flex h-full flex-1 flex-col rounded-2xl bg-[#edeae7] px-4 py-4 md:px-6 md:py-6 lg:px-8">
+    <section className="flex h-full flex-1 flex-col rounded-3xl bg-[#edeae7] px-4 py-4 md:px-6 md:py-6 lg:px-8 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
       <div className="flex h-full flex-1 overflow-auto">
-        <div className="flex h-full w-full">
+        <div className="mx-auto flex h-full w-full max-w-[720px] pt-6 pb-8 px-4 md:px-6 space-y-4 md:space-y-6">
           <SlideComponent {...(current.props as Slide['props'])} />
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-4 border-t border-[#ddd5cf] pt-4 text-base">
+      <div className="mt-8 flex items-center justify-between gap-4 border-t border-[#ddd5cf] pt-4 text-base">
         <SoftIconButton
           ariaLabel="Aller à la diapositive précédente"
           onClick={() => setIndex((value) => Math.max(0, value - 1))}
           disabled={prevDisabled}
-          className="h-14 w-14"
         >
           <StepBackIcon />
         </SoftIconButton>
@@ -84,7 +83,6 @@ export default function LessonPlayer({ slides }: LessonPlayerProps) {
           ariaLabel="Aller à la diapositive suivante"
           onClick={() => setIndex((value) => Math.min(slides.length - 1, value + 1))}
           disabled={nextDisabled}
-          className="h-14 w-14"
         >
           <StepForwardIcon />
         </SoftIconButton>

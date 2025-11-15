@@ -32,7 +32,7 @@ Environment variables:
 | `WHISPER_MODEL` | `small` | Model size passed to `WhisperModel`. |
 | `WHISPER_COMPUTE_TYPE` | `int8_float16` | Precision passed to `WhisperModel`. |
 | `WHISPER_DEVICE` | `auto` | Device string (`cpu`, `cuda`, etc.). |
-| `WHISPER_LANGUAGE` | _auto-detect_ | Optional ISO code to lock decoding. |
+| `WHISPER_LANGUAGE` | `en` | ISO code for forced decoding language (set to `auto` to re-enable auto-detect). |
 
 ## Connecting Next.js
 

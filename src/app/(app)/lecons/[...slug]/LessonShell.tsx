@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import LessonPlayer from "./LessonPlayer";
 import type { Slide } from '@/lessons/types';
 import LessonChrome from "./LessonChrome";
@@ -11,6 +12,34 @@ type Props = {
 };
 
 export default function LessonShell({ lessonSlug, slides }: Props) {
+  type SidebarState = 'full' | 'collapsed' | 'hidden';
+  type VisibleSidebarState = 'full' | 'collapsed';
+
+  const [sidebarState, setSidebarState] = useState<SidebarState>('full');
+  const [lastVisibleSidebarState, setLastVisibleSidebarState] =
+    useState<VisibleSidebarState>('full');
+
+  const handleSidebarStateChange = (next: SidebarState) => {
+    // Log for debugging (you can leave this in for now)
+    console.log('[LessonShell] handleSidebarStateChange:', { next, sidebarState, lastVisibleSidebarState });
+
+    if (next === 'hidden') {
+      setLastVisibleSidebarState((prev) => {
+        // Only update the remembered state when we are hiding from a visible state
+        if (sidebarState === 'full' || sidebarState === 'collapsed') {
+          return sidebarState;
+        }
+        return prev;
+      });
+      setSidebarState('hidden');
+      return;
+    }
+
+    // For 'full' and 'collapsed', update both current and last visible
+    setSidebarState(next);
+    setLastVisibleSidebarState(next);
+  };
+
   const slugParts = lessonSlug.split('/').filter(Boolean);
   const moduleName = slugParts[0] ?? lessonSlug;
   const lessonName = slugParts[1] ?? null;
@@ -20,12 +49,16 @@ export default function LessonShell({ lessonSlug, slides }: Props) {
 
   return (
     <LessonChrome
+      sidebarState={sidebarState}
       sidebar={
         <LessonSidebar
           moduleName={moduleName}
           lessonName={lessonName}
           lessonSlug={lessonSlug}
           currentSlideId={currentSlide?.id}
+          sidebarState={sidebarState}
+          lastVisibleSidebarState={lastVisibleSidebarState}
+          onSidebarStateChange={handleSidebarStateChange}
         />
       }
     >

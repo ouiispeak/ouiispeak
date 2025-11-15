@@ -46,17 +46,10 @@ export const slides: Slide[] = [
     type: 'ai-speak-student-repeat',
     props: {
       title: 'AI Speak Student Repeat',
-      instructions: 'Prononcez la phrase suivante clairement pour obtenir votre score.',
-      promptLabel: 'Phrase à répéter',
-      samplePrompt: "Bonjour, je m'appelle Caroline et j'adore parler français.",
-    },
-  },
-  {
-    id: 'pron-hello-1',
-    type: 'pronunciation',
-    props: {
-      referenceText: 'Hello, how are you?',
-      prompt: 'Click record and repeat this phrase.',
+      instructions: 'Speak clearly in English to receive your score.',
+      promptLabel: 'Sentence to repeat',
+      samplePrompt: 'Every morning I practice my English pronunciation.',
+      referenceText: 'Every morning I practice my English pronunciation.',
     },
   },
 
