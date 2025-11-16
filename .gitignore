@@ -46,3 +46,9 @@ next-env.d.ts
 # Ignore whisper virtualenv
 whisper/.venv/
 
+whisper/
+*.wav
+*.mp3
+*.m4a
+*.opus
+*.flac

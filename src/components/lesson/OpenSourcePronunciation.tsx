@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 type Props = {
   referenceText: string;
@@ -18,6 +18,7 @@ export function OpenSourcePronunciation({ referenceText, showReferenceLabel = tr
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const pendingStopRef = useRef(false);
 
   async function startRecording() {
     if (typeof window === 'undefined') return;
@@ -31,6 +32,7 @@ export function OpenSourcePronunciation({ referenceText, showReferenceLabel = tr
     setScore(null);
     setTranscript(null);
     setWords([]);
+    pendingStopRef.current = false;
 
     let stream: MediaStream;
     try {
@@ -79,7 +81,20 @@ export function OpenSourcePronunciation({ referenceText, showReferenceLabel = tr
         console.error(err);
         setError('Impossible de contacter le serveur de prononciation.');
       } finally {
+        pendingStopRef.current = false;
         chunksRef.current = [];
+        mr.stream.getTracks().forEach((track) => {
+          try {
+            track.stop();
+          } catch {
+            // ignore cleanup errors
+          }
+        });
+        mr.ondataavailable = null;
+        mr.onstop = null;
+        if (mediaRecorderRef.current === mr) {
+          mediaRecorderRef.current = null;
+        }
       }
     };
 
@@ -89,10 +104,44 @@ export function OpenSourcePronunciation({ referenceText, showReferenceLabel = tr
   }
 
   function stopRecording() {
+    pendingStopRef.current = true;
     mediaRecorderRef.current?.stop();
     mediaRecorderRef.current?.stream.getTracks().forEach((t) => t.stop());
     setIsRecording(false);
   }
+
+  useEffect(() => {
+    return () => {
+      const recorder = mediaRecorderRef.current;
+      if (!recorder) return;
+      if (pendingStopRef.current) {
+        return;
+      }
+
+      try {
+        if (recorder.state !== 'inactive') {
+          recorder.stop();
+        }
+      } catch {
+        // ignore stop errors during cleanup
+      }
+
+      const stream = recorder.stream;
+      if (stream) {
+        stream.getTracks().forEach((track) => {
+          try {
+            track.stop();
+          } catch {
+            // ignore cleanup errors
+          }
+        });
+      }
+
+      recorder.ondataavailable = null;
+      recorder.onstop = null;
+      mediaRecorderRef.current = null;
+    };
+  }, [isRecording]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -117,7 +166,7 @@ export function OpenSourcePronunciation({ referenceText, showReferenceLabel = tr
       {error && <p className="mb-4 md:mb-5 text-xs text-red-600">{error}</p>}
 
       {score != null && (
-        <div className="rounded-xl bg-white/70 p-3 text-sm shadow-sm">
+        <div className="rounded-lg bg-white/70 p-3 text-sm shadow-sm">
           <p className="mb-3 font-semibold text-[#3b3a37]">
             Score: {Math.round(score)} / 100
           </p>

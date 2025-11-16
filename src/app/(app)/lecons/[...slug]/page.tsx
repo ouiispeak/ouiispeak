@@ -14,12 +14,10 @@ function getLessonContent(slug: string) {
 export default async function Page({ params }: { params: Params }) {
   const segments = params.slug;
 
-  const rawLessonSlug =
+  const lessonSlug =
     segments[0] === 'play'
       ? segments.slice(1).join('/')
       : segments.join('/');
-
-  const lessonSlug = rawLessonSlug || 'templates/blank';
 
   const slides = getLessonContent(lessonSlug);
 

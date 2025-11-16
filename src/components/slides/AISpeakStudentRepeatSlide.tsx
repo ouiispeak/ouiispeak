@@ -22,7 +22,7 @@ export default function AISpeakStudentRepeatSlide({
         {instructions && <p className="mb-4 md:mb-5 mt-2 text-base text-[#555]">{instructions}</p>}
       </div>
 
-      <div className="w-full max-w-2xl rounded-md border border-dashed border-[#999] bg-[#f3f1ef] p-6 text-left mb-6 md:mb-8 mt-4 md:mt-6">
+      <div className="w-full max-w-2xl rounded-md border border-dashed border-[#999] bg-[#f6f5f3] p-6 text-left mb-6 md:mb-8 mt-4 md:mt-6">
         <p className="mb-4 md:mb-5 text-sm uppercase tracking-wide text-[#888]">{promptLabel}</p>
         <p className="mb-4 md:mb-5 mt-2 text-[1.15em] font-medium leading-relaxed text-[#192026]">{samplePrompt}</p>
 

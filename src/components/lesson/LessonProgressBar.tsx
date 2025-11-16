@@ -32,12 +32,12 @@ import { memo } from "react";
          aria-valuemax={100}
          aria-valuenow={roundedPercent}
        >
-         <div className="h-3 md:h-3.5 py-1 w-full overflow-hidden rounded-full bg-[#e5e2df]">
-           <div
-             className="h-2 rounded-full bg-[#2E8C8C] transition-all duration-500 ease-out motion-reduce:transition-none"
-             style={{ width: `${percent}%` }}
-           />
-         </div>
+        <div className="h-3 md:h-3.5 w-full rounded-full bg-[#ece9e3] p-[2px] shadow-[inset_2px_2px_4px_rgba(0,0,0,0.1),inset_-1px_-1px_2px_rgba(255,255,255,0.95)]">
+          <div
+            className="h-full rounded-full bg-[#2E8C8C] transition-all duration-500 ease-out motion-reduce:transition-none"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
          <span className="sr-only">{`${ariaLabel}: ${percentText} complete`}</span>
        </div>
 

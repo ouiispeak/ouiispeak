@@ -27,9 +27,24 @@ const NotebookIcon = () => (
   </svg>
 );
 
-const BookmarkIcon = () => (
-  <svg {...iconProps}>
-    <path d="M7 3h10a2 2 0 0 1 2 2v16l-7-4-7 4V5a2 2 0 0 1 2-2z" />
+const BookmarkIcon = ({ filled = false }: { filled?: boolean }) => (
+  <svg
+    {...iconProps}
+    className={[
+      iconProps.className,
+      filled ? 'opacity-100 fill-[#222326] stroke-[#222326]' : '',
+    ]
+      .filter(Boolean)
+      .join(' ')}
+  >
+    <path
+      d="M7 3h10a2 2 0 0 1 2 2v16l-7-4-7 4V5a2 2 0 0 1 2-2z"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke={filled ? 'currentColor' : 'currentColor'}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </svg>
 );
 
@@ -104,8 +119,6 @@ const ChevronRightIcon = () => (
 );
 
 type LessonSidebarProps = {
-  moduleName: string;
-  lessonName?: string | null;
   lessonSlug: string;
   currentSlideId?: string;
   onRestartAction?: () => void;
@@ -115,8 +128,6 @@ type LessonSidebarProps = {
 };
 
 export default function LessonSidebar({
-  moduleName: _moduleName,
-  lessonName: _lessonName,
   lessonSlug,
   currentSlideId,
   onRestartAction,
@@ -127,7 +138,7 @@ export default function LessonSidebar({
   const effectiveSidebarState = sidebarState ?? 'full';
   const router = useRouter();
   const { notes, add, loading: notesLoading } = useLessonNotes(lessonSlug);
-  const { isBookmarked, add: addBookmark, loading: bookmarkLoading } = useLessonBookmarks(lessonSlug);
+  const { isBookmarked, add: addBookmark, remove: removeBookmark, loading: bookmarkLoading } = useLessonBookmarks(lessonSlug);
   
   // Local UI state
   const [isNotesOpen, setIsNotesOpen] = useState(false);
@@ -185,9 +196,13 @@ export default function LessonSidebar({
 
   const handleBookmarkToggle = async () => {
     if (!currentSlideId) return;
-    
+
     try {
-      await addBookmark(currentSlideId);
+      if (isBookmarked(currentSlideId)) {
+        await removeBookmark(currentSlideId);
+      } else {
+        await addBookmark(currentSlideId);
+      }
     } catch (error) {
       console.error('Failed to toggle bookmark:', error);
     }
@@ -215,12 +230,14 @@ export default function LessonSidebar({
   };
 
   const isFull = effectiveSidebarState === 'full';
-  const isCollapsed = effectiveSidebarState === 'collapsed';
-  const showLabels = isFull;
-  const iconLayoutClass = isFull
-    ? 'flex w-full items-center gap-3 text-left'
-    : 'flex flex-col items-center gap-1 text-center';
-  const sectionAlignmentClass = isFull ? 'items-start' : 'items-center';
+  const iconLayoutClass = 'flex w-full items-center text-left';
+  const sectionAlignmentClass = 'items-start';
+  const labelClassName = [
+    'text-xs text-[#4b4842] whitespace-nowrap text-left overflow-hidden',
+    'transition-[max-width,opacity] duration-300 ease-in-out',
+    'ml-3',
+    isFull ? 'max-w-[180px] opacity-100' : 'max-w-0 opacity-0',
+  ].join(' ');
 
   // Early return for hidden state – use the remembered visible state
   if (effectiveSidebarState === 'hidden') {
@@ -249,7 +266,7 @@ export default function LessonSidebar({
       <div
         className={[
           'flex w-full justify-between gap-6 md:h-full md:flex-col md:justify-between md:gap-8',
-          isCollapsed ? 'items-start md:items-start' : 'items-center md:items-center',
+          'items-start md:items-center',
         ].join(' ')}
       >
         <div className={`flex w-full flex-col ${sectionAlignmentClass} gap-4`}>
@@ -259,19 +276,13 @@ export default function LessonSidebar({
                 ariaLabel={isNotesOpen ? "Fermer le carnet" : "Ouvrir le carnet"}
                 onClick={handleNotesToggle}
                 disabled={notesLoading}
+                className="flex-shrink-0"
               >
                 <NotebookIcon />
               </SoftIconButton>
-              {showLabels && (
-                <span
-                  className={[
-                    'text-xs text-[#4b4842]',
-                    isFull ? 'whitespace-nowrap text-left' : '',
-                  ].join(' ')}
-                >
-                  Journal
-                </span>
-              )}
+              <span className={labelClassName} aria-hidden={!isFull}>
+                Journal
+              </span>
             </div>
             {effectiveSidebarState === 'full' && isNotesOpen && (
               <div className="w-full space-y-2 md:w-48">
@@ -291,13 +302,13 @@ export default function LessonSidebar({
                   <button
                     onClick={handleSaveNotes}
                     disabled={isSavingNotes || !notesText.trim()}
-                    className="rounded-xl px-6 py-3 bg-[#e8e5e1] text-[#222326] hover:bg-[#e1ded9] transition-colors duration-200 disabled:opacity-50"
+                    className="rounded-lg px-6 py-3 bg-[#e8e5e1] text-[#222326] hover:bg-[#e1ded9] transition-colors duration-200 disabled:opacity-50"
                   >
                     {isSavingNotes ? "Sauvegarde..." : "Sauvegarder"}
                   </button>
                   <button
                     onClick={() => setIsNotesOpen(false)}
-                    className="rounded-xl px-6 py-3 bg-[#e8e5e1] text-[#222326] hover:bg-[#e1ded9] transition-colors duration-200"
+                    className="rounded-lg px-6 py-3 bg-[#e8e5e1] text-[#222326] hover:bg-[#e1ded9] transition-colors duration-200"
                   >
                     Fermer
                   </button>
@@ -307,44 +318,31 @@ export default function LessonSidebar({
           </div>
 
           <div className={iconLayoutClass}>
-            <SoftIconButton
-              ariaLabel={
-                currentSlideId && isBookmarked(currentSlideId)
-                  ? "Retirer le signet"
-                  : "Enregistrer un signet"
-              }
-              onClick={handleBookmarkToggle}
-              disabled={bookmarkLoading || !currentSlideId}
-            >
-              <BookmarkIcon />
-            </SoftIconButton>
-            {showLabels && (
-              <span
-                className={[
-                  'text-xs text-[#4b4842]',
-                  isFull ? 'whitespace-nowrap text-left' : '',
-                ].join(' ')}
-              >
-                Favoris
-              </span>
-            )}
+                <SoftIconButton
+                  ariaLabel={
+                    currentSlideId && isBookmarked(currentSlideId)
+                      ? "Retirer le signet"
+                      : "Enregistrer un signet"
+                  }
+                  onClick={handleBookmarkToggle}
+                  disabled={bookmarkLoading || !currentSlideId}
+                  className="flex-shrink-0"
+                >
+                  <BookmarkIcon filled={!!(currentSlideId && isBookmarked(currentSlideId))} />
+                </SoftIconButton>
+            <span className={labelClassName} aria-hidden={!isFull}>
+              Favoris
+            </span>
           </div>
 
           <div className={`flex w-full flex-col ${sectionAlignmentClass} gap-2`}>
             <div className={iconLayoutClass}>
-              <SoftIconButton ariaLabel="Raichel" onClick={handleHelpClick}>
+              <SoftIconButton ariaLabel="Raichel" onClick={handleHelpClick} className="flex-shrink-0">
                 <BrainIcon />
               </SoftIconButton>
-              {showLabels && (
-                <span
-                  className={[
-                    'text-xs text-[#4b4842]',
-                    isFull ? 'whitespace-nowrap text-left' : '',
-                  ].join(' ')}
-                >
-                  Aide
-                </span>
-              )}
+              <span className={labelClassName} aria-hidden={!isFull}>
+                Aide
+              </span>
             </div>
             {effectiveSidebarState === 'full' && showHelp && (
               <div className="w-full rounded-md bg-[#f6f5f3] p-3 text-sm text-[#333] md:w-auto">
@@ -375,73 +373,47 @@ export default function LessonSidebar({
                       effectiveSidebarState === 'full' ? 'collapsed' : 'full'
                     )
                   }
+                  className="flex-shrink-0"
                 >
                   {effectiveSidebarState === 'full' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
                 </SoftIconButton>
-                {showLabels && (
-                  <span
-                    className={[
-                      'text-xs text-[#4b4842]',
-                      isFull ? 'whitespace-nowrap text-left' : '',
-                    ].join(' ')}
-                  >
-                    {effectiveSidebarState === 'full' ? 'Réduire' : 'Développer'}
-                  </span>
-                )}
+                <span className={labelClassName} aria-hidden={!isFull}>
+                  {effectiveSidebarState === 'full' ? 'Réduire' : 'Développer'}
+                </span>
               </div>
 
               <div className={iconLayoutClass}>
                 <SoftIconButton
                   ariaLabel="Masquer les outils"
                   onClick={() => onSidebarStateChange('hidden')}
+                  className="flex-shrink-0"
                 >
                   <EyeIcon />
                 </SoftIconButton>
-                {showLabels && (
-                  <span
-                    className={[
-                      'text-xs text-[#4b4842]',
-                      isFull ? 'whitespace-nowrap text-left' : '',
-                    ].join(' ')}
-                  >
-                    Masquer
-                  </span>
-                )}
+                <span className={labelClassName} aria-hidden={!isFull}>
+                  Masquer
+                </span>
               </div>
             </div>
           )}
 
           <div className={iconLayoutClass}>
-            <SoftIconButton ariaLabel="Redémarrer la leçon" onClick={handleRestartClick}>
+            <SoftIconButton ariaLabel="Redémarrer la leçon" onClick={handleRestartClick} className="flex-shrink-0">
               <RotateCcwIcon />
             </SoftIconButton>
-            {showLabels && (
-              <span
-                className={[
-                  'text-xs text-[#4b4842]',
-                  isFull ? 'whitespace-nowrap text-left' : '',
-                ].join(' ')}
-              >
-                Recommencer
-              </span>
-            )}
+            <span className={labelClassName} aria-hidden={!isFull}>
+              Recommencer
+            </span>
           </div>
 
           <div className={`flex w-full flex-col ${sectionAlignmentClass} gap-2`}>
             <div className={iconLayoutClass}>
-              <SoftIconButton ariaLabel="Quitter la leçon" onClick={handleQuit}>
+              <SoftIconButton ariaLabel="Quitter la leçon" onClick={handleQuit} className="flex-shrink-0">
                 <ExitIcon />
               </SoftIconButton>
-              {showLabels && (
-                <span
-                  className={[
-                    'text-xs text-[#4b4842]',
-                    isFull ? 'whitespace-nowrap text-left' : '',
-                  ].join(' ')}
-                >
-                  Quitter
-                </span>
-              )}
+              <span className={labelClassName} aria-hidden={!isFull}>
+                Quitter
+              </span>
             </div>
             {effectiveSidebarState === 'full' && showRestartConfirm && (
               <div className="w-full rounded-md bg-[#fff7ed] p-3 text-center text-sm text-[#92400e] md:w-auto">
@@ -449,13 +421,13 @@ export default function LessonSidebar({
                 <div className="mt-2 flex justify-center gap-2">
                   <button
                     onClick={handleRestartConfirm}
-                    className="rounded-xl px-6 py-3 bg-[#e8e5e1] text-[#222326] hover:bg-[#e1ded9] transition-colors duration-200"
+                    className="rounded-lg px-6 py-3 bg-[#e8e5e1] text-[#222326] hover:bg-[#e1ded9] transition-colors duration-200"
                   >
                     Oui
                   </button>
                   <button
                     onClick={handleRestartCancel}
-                    className="rounded-xl px-6 py-3 bg-[#e8e5e1] text-[#222326] hover:bg-[#e1ded9] transition-colors duration-200"
+                    className="rounded-lg px-6 py-3 bg-[#e8e5e1] text-[#222326] hover:bg-[#e1ded9] transition-colors duration-200"
                   >
                     Non
                   </button>

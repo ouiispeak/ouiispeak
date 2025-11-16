@@ -1,55 +1,19 @@
 'use client';
 
-import { useState } from 'react';
 import { SlideRegistry } from '@/components/slides';
-import SoftIconButton from '@/components/CircleButton';
-import LessonProgressBar from '@/components/lesson/LessonProgressBar';
 import type { Slide } from '@/lessons/types';
-
-const StepBackIcon = () => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="h-5 w-5"
-    aria-hidden="true"
-  >
-    <rect x="3" y="4" width="3" height="16" />
-    <polygon points="21 4 9 12 21 20 21 4" />
-  </svg>
-);
-
-const StepForwardIcon = () => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="h-5 w-5"
-    aria-hidden="true"
-  >
-    <rect x="18" y="4" width="3" height="16" />
-    <polygon points="3 4 15 12 3 20 3 4" />
-  </svg>
-);
 
 type LessonPlayerProps = {
   slides: Slide[];
+  currentIndex: number;
 };
 
-export default function LessonPlayer({ slides }: LessonPlayerProps) {
-  const [index, setIndex] = useState(0);
-
+export default function LessonPlayer({ slides, currentIndex }: LessonPlayerProps) {
   if (!slides || slides.length === 0) {
     return <p>Aucune diapositive trouvée.</p>;
   }
 
-  const safeIndex = Math.min(index, slides.length - 1);
+  const safeIndex = Math.min(currentIndex, slides.length - 1);
   const current = slides[safeIndex];
   const SlideComponent = SlideRegistry[current.type] as
     | ((props: Slide['props']) => JSX.Element)
@@ -59,34 +23,11 @@ export default function LessonPlayer({ slides }: LessonPlayerProps) {
     return <p>Type de diapositive inconnu : {current.type}</p>;
   }
 
-  const prevDisabled = safeIndex === 0;
-  const nextDisabled = safeIndex >= slides.length - 1;
-
   return (
-    <section className="flex h-full flex-1 flex-col rounded-3xl bg-[#edeae7] px-4 py-4 md:px-6 md:py-6 lg:px-8 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-      <div className="flex h-full flex-1 overflow-auto">
-        <div className="mx-auto flex h-full w-full max-w-[720px] pt-6 pb-8 px-4 md:px-6 space-y-4 md:space-y-6">
-          <SlideComponent {...(current.props as Slide['props'])} />
-        </div>
+    <div className="mb-4 flex h-full flex-1 overflow-auto rounded-lg bg-[#f4f2ee] px-4 py-4 md:mb-6 md:px-6 md:py-6 lg:px-8 shadow-[1px_1px_3px_rgba(0,0,0,0.1),-1px_-1px_2px_rgba(255,255,255,0.9)]">
+      <div className="mx-auto flex h-full w-full max-w-[720px] pt-6 pb-8 px-4 md:px-6 space-y-4 md:space-y-6">
+        <SlideComponent {...(current.props as Slide['props'])} />
       </div>
-
-      <div className="mt-8 flex items-center justify-between gap-4 border-t border-[#ddd5cf] pt-4 text-base">
-        <SoftIconButton
-          ariaLabel="Aller à la diapositive précédente"
-          onClick={() => setIndex((value) => Math.max(0, value - 1))}
-          disabled={prevDisabled}
-        >
-          <StepBackIcon />
-        </SoftIconButton>
-        <LessonProgressBar current={safeIndex} total={slides.length} showLabel={false} ariaLabel="Progression de la leçon" className="max-w-xs" />
-        <SoftIconButton
-          ariaLabel="Aller à la diapositive suivante"
-          onClick={() => setIndex((value) => Math.min(slides.length - 1, value + 1))}
-          disabled={nextDisabled}
-        >
-          <StepForwardIcon />
-        </SoftIconButton>
-      </div>
-    </section>
+    </div>
   );
 }

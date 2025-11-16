@@ -1,10 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import LessonPlayer from "./LessonPlayer";
 import type { Slide } from '@/lessons/types';
 import LessonChrome from "./LessonChrome";
 import LessonSidebar from "./LessonSidebar";
+import SoftIconButton from "@/components/CircleButton";
+import LessonProgressBar from "@/components/lesson/LessonProgressBar";
+
+const StepBackIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-5 w-5"
+    aria-hidden="true"
+  >
+    <rect x="3" y="4" width="3" height="16" />
+    <polygon points="21 4 9 12 21 20 21 4" />
+  </svg>
+);
+
+const StepForwardIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-5 w-5"
+    aria-hidden="true"
+  >
+    <rect x="18" y="4" width="3" height="16" />
+    <polygon points="3 4 15 12 3 20 3 4" />
+  </svg>
+);
 
 type Props = {
   lessonSlug: string;
@@ -18,11 +52,12 @@ export default function LessonShell({ lessonSlug, slides }: Props) {
   const [sidebarState, setSidebarState] = useState<SidebarState>('full');
   const [lastVisibleSidebarState, setLastVisibleSidebarState] =
     useState<VisibleSidebarState>('full');
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const handleRestartAction = () => {
+    setCurrentIndex(0);
+  };
 
   const handleSidebarStateChange = (next: SidebarState) => {
-    // Log for debugging (you can leave this in for now)
-    console.log('[LessonShell] handleSidebarStateChange:', { next, sidebarState, lastVisibleSidebarState });
-
     if (next === 'hidden') {
       setLastVisibleSidebarState((prev) => {
         // Only update the remembered state when we are hiding from a visible state
@@ -41,37 +76,67 @@ export default function LessonShell({ lessonSlug, slides }: Props) {
   };
 
   const slugParts = lessonSlug.split('/').filter(Boolean);
-  const moduleName = slugParts[0] ?? lessonSlug;
-  const lessonName = slugParts[1] ?? null;
   const hasCanonicalSlug = slugParts.length >= 2;
   const playableSlides = hasCanonicalSlug ? slides : [];
-  const currentSlide = playableSlides[0] ?? null;
+  const effectiveIndex = playableSlides.length > 0 ? Math.min(currentIndex, playableSlides.length - 1) : 0;
+  const currentSlide = playableSlides[effectiveIndex] ?? null;
+
+  useEffect(() => {
+    if (playableSlides.length === 0) {
+      if (currentIndex !== 0) {
+        setCurrentIndex(0);
+      }
+      return;
+    }
+    const maxIndex = playableSlides.length - 1;
+    if (currentIndex > maxIndex) {
+      setCurrentIndex(maxIndex);
+    }
+  }, [currentIndex, playableSlides.length]);
+
+  const prevDisabled = effectiveIndex === 0;
+  const nextDisabled = effectiveIndex >= playableSlides.length - 1;
 
   return (
     <LessonChrome
       sidebarState={sidebarState}
       sidebar={
         <LessonSidebar
-          moduleName={moduleName}
-          lessonName={lessonName}
           lessonSlug={lessonSlug}
           currentSlideId={currentSlide?.id}
           sidebarState={sidebarState}
           lastVisibleSidebarState={lastVisibleSidebarState}
           onSidebarStateChange={handleSidebarStateChange}
+          onRestartAction={handleRestartAction}
         />
       }
     >
-      <div className="flex h-full flex-1 flex-col gap-4">
-        {!hasCanonicalSlug && (
-          <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900">
-            Cette leçon n&apos;est pas encore configurée correctement (slug incomplet). Ajoutez un module
-            et une leçon pour continuer.
-          </div>
-        )}
-        <div className="flex h-full flex-1">
-          <LessonPlayer slides={playableSlides} />
+      {!hasCanonicalSlug && (
+        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+          Cette leçon n&apos;est pas encore configurée correctement (slug incomplet). Ajoutez un module
+          et une leçon pour continuer.
         </div>
+      )}
+      <LessonPlayer
+        slides={playableSlides}
+        currentIndex={effectiveIndex}
+      />
+      <div className="flex items-center justify-between gap-4 text-base">
+        <SoftIconButton
+          ariaLabel="Aller à la diapositive précédente"
+          onClick={() => setCurrentIndex((value) => Math.max(0, value - 1))}
+          disabled={prevDisabled}
+        >
+          <StepBackIcon />
+        </SoftIconButton>
+        <LessonProgressBar current={effectiveIndex} total={playableSlides.length} showLabel={false} ariaLabel="Progression de la leçon" className="max-w-xs" />
+        <SoftIconButton
+          ariaLabel="Aller à la diapositive suivante"
+          onClick={() => setCurrentIndex((value) => Math.min(playableSlides.length - 1, value + 1))}
+          disabled={nextDisabled}
+        >
+          <StepForwardIcon />
+        </SoftIconButton>
       </div>
     </LessonChrome>
   );
