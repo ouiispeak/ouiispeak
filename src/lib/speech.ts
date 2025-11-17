@@ -45,8 +45,20 @@ export async function fetchSpeechAsset(
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || 'Impossible de générer la voix.');
+    let errorMessage = 'Impossible de générer la voix.';
+    try {
+      const contentType = response.headers.get('content-type');
+      if (contentType?.includes('application/json')) {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } else {
+        const text = await response.text();
+        errorMessage = text || errorMessage;
+      }
+    } catch {
+      // If parsing fails, use default message
+    }
+    throw new Error(errorMessage);
   }
 
   const arrayBuffer = await response.arrayBuffer();

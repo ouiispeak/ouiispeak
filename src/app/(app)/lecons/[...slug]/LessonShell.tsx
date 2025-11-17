@@ -8,7 +8,7 @@ import LessonSidebar from "./LessonSidebar";
 import SoftIconButton from "@/components/CircleButton";
 import LessonProgressBar from "@/components/lesson/LessonProgressBar";
 
-const StepBackIcon = () => (
+const ChevronLeftIcon = () => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -16,15 +16,14 @@ const StepBackIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className="h-5 w-5"
+    className="h-7 w-7"
     aria-hidden="true"
   >
-    <rect x="3" y="4" width="3" height="16" />
-    <polygon points="21 4 9 12 21 20 21 4" />
+    <path d="m15 18-6-6 6-6" />
   </svg>
 );
 
-const StepForwardIcon = () => (
+const ChevronRightIcon = () => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -32,11 +31,10 @@ const StepForwardIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className="h-5 w-5"
+    className="h-7 w-7"
     aria-hidden="true"
   >
-    <rect x="18" y="4" width="3" height="16" />
-    <polygon points="3 4 15 12 3 20 3 4" />
+    <path d="m9 18 6-6-6-6" />
   </svg>
 );
 
@@ -127,7 +125,7 @@ export default function LessonShell({ lessonSlug, slides }: Props) {
           onClick={() => setCurrentIndex((value) => Math.max(0, value - 1))}
           disabled={prevDisabled}
         >
-          <StepBackIcon />
+          <ChevronLeftIcon />
         </SoftIconButton>
         <LessonProgressBar current={effectiveIndex} total={playableSlides.length} showLabel={false} ariaLabel="Progression de la leçon" className="max-w-xs" />
         <SoftIconButton
@@ -135,7 +133,7 @@ export default function LessonShell({ lessonSlug, slides }: Props) {
           onClick={() => setCurrentIndex((value) => Math.min(playableSlides.length - 1, value + 1))}
           disabled={nextDisabled}
         >
-          <StepForwardIcon />
+          <ChevronRightIcon />
         </SoftIconButton>
       </div>
     </LessonChrome>

@@ -15,20 +15,19 @@ export const slides: Slide[] = [
     id: 'text-1',
     type: 'text-slide',
     props: {
-      title: 'Deux encadrés contrôlés par la leçon',
-      subtitle: 'Ajoutez body, body1, body2 ou bodies[] selon vos besoins',
+      title: 'Deux encadrés contrôlés par la leçon, NS',
+      subtitle: 'Ajoutez body, body1, body2 ou bodies[] selon vos besoins, NS',
       body1:
         'Avec un seul champ body, vous obtenez un unique encadré. Ajoutez body1 / body2 pour empiler plusieurs zones de texte.',
-      body2:
-        'Chaque encadré vit dans le fichier de leçon : aucun duplicata n’est généré automatiquement par le composant.',
     },
   },
+
   {
     id: 'ai-repeat',
     type: 'ai-speak-repeat',
     props: {
-      title: 'AI Speak Repeat',
-      subtitle: 'Répétition de l’alphabet anglais',
+      title: 'Alphabet Pronunciation',
+      subtitle: 'Répétition de l’alphabet anglais, NS',
       note: 'Cliquez sur chaque lettre pour entendre la prononciation.',
       defaultLang: 'en',
       lines: [
@@ -46,8 +45,8 @@ export const slides: Slide[] = [
     type: 'ai-speak-student-repeat',
     props: {
       title: 'AI Speak Student Repeat',
-      instructions: 'Speak clearly in English to receive your score.',
-      promptLabel: 'Sentence to repeat',
+      instructions: 'Speak clearly in English to receive your score. Votre enregistrement est envoyé au service de prononciation puis noté automatiquement. ',
+      promptLabel: 'Sentence to repeat, NS',
       samplePrompt: 'Every morning I practice my English pronunciation.',
       referenceText: 'Every morning I practice my English pronunciation.',
     },

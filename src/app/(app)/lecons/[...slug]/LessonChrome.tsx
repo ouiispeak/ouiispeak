@@ -9,9 +9,9 @@ type LessonChromeProps = {
 
 export default function LessonChrome({ children, sidebar, sidebarState = 'full' }: LessonChromeProps) {
   return (
-    <main className="flex h-[85vh] w-full items-center justify-center bg-transparent">
+    <main className="flex h-[85vh] w-full items-center justify-center bg-transparent px-2">
       <PaperCard
-        className="lesson-surface flex h-full w-screen max-w-none flex-col items-stretch gap-4 md:flex-row md:gap-6"
+        className="lesson-surface flex h-full w-full max-w-none flex-col items-stretch gap-4 md:flex-row md:gap-6"
         style={{ backgroundColor: '#ece9e3' }}
       >
         {sidebar && (

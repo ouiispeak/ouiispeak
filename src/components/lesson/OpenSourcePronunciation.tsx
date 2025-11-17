@@ -1,13 +1,40 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type SVGProps } from 'react';
 
 type Props = {
   referenceText: string;
   showReferenceLabel?: boolean;
+  buttonOnly?: boolean;
 };
 
-export function OpenSourcePronunciation({ referenceText, showReferenceLabel = true }: Props) {
+const iconProps: SVGProps<SVGSVGElement> = {
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 2,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+  className: 'h-6 w-6',
+  'aria-hidden': true,
+};
+
+const MicrophoneIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
+  <svg {...iconProps} className={className}>
+    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+    <line x1="12" y1="19" x2="12" y2="23" />
+    <line x1="8" y1="23" x2="16" y2="23" />
+  </svg>
+);
+
+const StopRecordingIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
+  <svg {...iconProps} className={className}>
+    <rect x="6" y="6" width="12" height="12" rx="2" />
+  </svg>
+);
+
+export function OpenSourcePronunciation({ referenceText, showReferenceLabel = true, buttonOnly = false }: Props) {
   const [isRecording, setIsRecording] = useState(false);
   const [score, setScore] = useState<number | null>(null);
   const [transcript, setTranscript] = useState<string | null>(null);
@@ -143,6 +170,30 @@ export function OpenSourcePronunciation({ referenceText, showReferenceLabel = tr
     };
   }, [isRecording]);
 
+  const button = (
+    <button
+      type="button"
+      onClick={isRecording ? stopRecording : startRecording}
+      className="flex flex-col items-center gap-1 rounded-xl border border-[#e3e0dc] bg-transparent px-4 py-2 text-center font-normal font-sans text-[#222326] transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0c9599] focus-visible:ring-offset-2"
+    >
+      {isRecording ? (
+        <>
+          <StopRecordingIcon />
+          <span className="text-xs text-[#222326]">Stop</span>
+        </>
+      ) : (
+        <>
+          <MicrophoneIcon />
+          <span className="text-xs text-[#222326]">Record</span>
+        </>
+      )}
+    </button>
+  );
+
+  if (buttonOnly) {
+    return button;
+  }
+
   return (
     <div className="flex flex-col gap-3">
       {showReferenceLabel && (
@@ -152,15 +203,7 @@ export function OpenSourcePronunciation({ referenceText, showReferenceLabel = tr
       )}
 
       <div className="mt-4 md:mt-6 mb-2">
-        <button
-          type="button"
-          onClick={isRecording ? stopRecording : startRecording}
-          className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200 hover:bg-[#e8e5e1] focus:outline-none focus:ring-2 focus:ring-[#cfcac5] focus:ring-offset-2 focus:ring-offset-transparent ${
-            isRecording ? 'bg-red-500 text-white' : 'bg-emerald-600 text-white'
-          }`}
-        >
-          {isRecording ? 'Stop' : 'Record'}
-        </button>
+        {button}
       </div>
 
       {error && <p className="mb-4 md:mb-5 text-xs text-red-600">{error}</p>}

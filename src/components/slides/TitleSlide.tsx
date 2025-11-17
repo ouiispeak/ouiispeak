@@ -1,19 +1,27 @@
 'use client';
 
+import { getShowValue } from '@/lib/slideUtils';
+
 type TitleSlideProps = {
   title: string;
   subtitle?: string;
 };
 
 export default function TitleSlide({ title, subtitle }: TitleSlideProps) {
+  // Parse NS (no show) syntax
+  const showTitle = getShowValue(title);
+  const showSubtitle = getShowValue(subtitle);
+  
   return (
     <div className="flex h-full w-full flex-col items-center justify-center px-6 py-8 text-center md:px-10 leading-relaxed md:leading-loose pt-2 md:pt-4">
-      <h1 className="mb-4 md:mb-6 max-w-3xl text-balance text-4xl font-bold text-[#0c9599] md:text-5xl lg:text-6xl">
-        {title}
-      </h1>
-      {subtitle && (
-        <p className="mb-4 md:mb-5 max-w-2xl text-balance text-xl text-[#222326] md:text-2xl lg:text-3xl">
-          {subtitle}
+      {showTitle && (
+        <h1 className="mb-4 md:mb-6 max-w-3xl text-balance font-normal text-[#0c9599]" style={{ fontSize: 'clamp(3.375rem, 6vw, 5.625rem)' }}>
+          {showTitle}
+        </h1>
+      )}
+      {showSubtitle && (
+        <p className="mb-4 md:mb-5 max-w-2xl text-balance text-xl font-normal text-[#222326] md:text-2xl lg:text-3xl">
+          {showSubtitle}
         </p>
       )}
     </div>

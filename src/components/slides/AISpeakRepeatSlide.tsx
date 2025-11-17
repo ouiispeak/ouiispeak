@@ -13,7 +13,7 @@ import ContentBox from './ContentBox';
 import type { AiSpeakRepeatCell, AiSpeakRepeatSlideProps } from '@/lessons/types';
 import { DEFAULT_SPEECH_LANG, type SupportedLang } from '@/lib/voices';
 import { fetchSpeechAsset, type SpeechAsset } from '@/lib/speech';
-import SoftIconButton from '@/components/CircleButton';
+import { getShowValue } from '@/lib/slideUtils';
 
 type AISpeakRepeatProps = AiSpeakRepeatSlideProps;
 
@@ -30,14 +30,14 @@ const playPauseIconProps: SVGProps<SVGSVGElement> = {
   'aria-hidden': true,
 };
 
-const PlayIcon = () => (
-  <svg {...playPauseIconProps}>
+const PlayIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
+  <svg {...playPauseIconProps} className={className}>
     <path d="M7 5l12 7-12 7V5z" />
   </svg>
 );
 
-const PauseIcon = () => (
-  <svg {...playPauseIconProps}>
+const PauseIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
+  <svg {...playPauseIconProps} className={className}>
     <line x1="9" y1="5" x2="9" y2="19" />
     <line x1="15" y1="5" x2="15" y2="19" />
   </svg>
@@ -51,6 +51,10 @@ export default function AISpeakRepeatSlide({
   defaultLang = DEFAULT_SPEECH_LANG,
   gapClass = 'gap-4',
 }: AISpeakRepeatProps) {
+  // Parse NS (no show) syntax
+  const showTitle = getShowValue(title);
+  const showSubtitle = getShowValue(subtitle);
+  const showNote = getShowValue(note);
   const rows = useMemo(() => lines ?? [], [lines]);
 
   const rowStartIndices = useMemo(() => {
@@ -68,6 +72,7 @@ export default function AISpeakRepeatSlide({
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
   const [playedIndices, setPlayedIndices] = useState<Set<number>>(new Set());
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlayingAll, setIsPlayingAll] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sequenceState, setSequenceState] = useState<'idle' | 'playing' | 'paused' | 'completed'>(
     'idle',
@@ -225,6 +230,7 @@ export default function AISpeakRepeatSlide({
         if (activeSequenceRef.current === sequenceId) {
           currentAudioRef.current = null;
           setIsPlaying(false);
+          setIsPlayingAll(false);
           setCurrentIndex(null);
           if (nextIndexRef.current >= flatElements.length) {
             setSequenceState('completed');
@@ -258,6 +264,7 @@ export default function AISpeakRepeatSlide({
       activeSequenceRef.current += 1;
       const sequenceId = activeSequenceRef.current;
       setIsPlaying(true);
+      setIsPlayingAll(true);
       setSequenceState('playing');
       const startIndex = canResume ? nextIndexRef.current : 0;
       setError(null);
@@ -265,6 +272,19 @@ export default function AISpeakRepeatSlide({
     },
     [flatElements.length, isPlaying, resetStateForNewSequence, runSequence, sequenceState],
   );
+
+  const stopAllPlayback = useCallback(() => {
+    activeSequenceRef.current += 1;
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current.removeAttribute('src');
+      currentAudioRef.current = null;
+    }
+    setIsPlaying(false);
+    setIsPlayingAll(false);
+    setCurrentIndex(null);
+    setSequenceState('idle');
+  }, []);
 
   const handlePlayClick = useCallback(() => {
     if (sequenceState === 'paused' && nextIndexRef.current < flatElements.length) {
@@ -274,30 +294,54 @@ export default function AISpeakRepeatSlide({
     }
   }, [flatElements.length, sequenceState, startSequence]);
 
+  const handleTogglePlayAll = useCallback(() => {
+    if (isPlayingAll) {
+      stopAllPlayback();
+    } else {
+      startSequence();
+    }
+  }, [isPlayingAll, stopAllPlayback, startSequence]);
+
   const pauseSequence = useCallback(() => {
     if (!isPlaying && currentAudioRef.current === null) return;
-
-    activeSequenceRef.current += 1;
-    if (currentIndex !== null) {
-      nextIndexRef.current = currentIndex;
-    }
-    currentAudioRef.current?.pause();
-    currentAudioRef.current?.removeAttribute('src');
-    currentAudioRef.current = null;
-    setIsPlaying(false);
-    setCurrentIndex(null);
-    setSequenceState('paused');
-  }, [currentIndex, isPlaying]);
+    stopAllPlayback();
+  }, [isPlaying, stopAllPlayback]);
 
   const playSingleCell = useCallback(
     async (cell: AiSpeakRepeatCell, index: number) => {
       try {
+        // Stop any currently playing audio
+        if (currentAudioRef.current) {
+          currentAudioRef.current.pause();
+          currentAudioRef.current.removeAttribute('src');
+          currentAudioRef.current = null;
+        }
+
         const asset = await resolveAudio(cell, index);
         const audio = new Audio(asset.url);
+        currentAudioRef.current = audio;
+
+        audio.addEventListener('ended', () => {
+          if (currentAudioRef.current === audio) {
+            currentAudioRef.current = null;
+          }
+        });
+
+        audio.addEventListener('error', () => {
+          if (currentAudioRef.current === audio) {
+            currentAudioRef.current = null;
+          }
+          const fallbackLabel = cell.label ?? 'élément';
+          setError(`Impossible de lire l'élément "${fallbackLabel}"`);
+        });
+
         await audio.play();
       } catch (err) {
         console.error(err);
         setError(err instanceof Error ? err.message : 'Impossible de lire cet élément.');
+        if (currentAudioRef.current) {
+          currentAudioRef.current = null;
+        }
       }
     },
     [resolveAudio],
@@ -305,16 +349,34 @@ export default function AISpeakRepeatSlide({
 
   const handleCellClick = useCallback(
     (cell: AiSpeakRepeatCell, index: number, isFirst: boolean) => {
-      if (isFirst && sequenceState !== 'playing') {
-        handlePlayClick();
+      // If playing all sequence, interrupt it and play the clicked letter
+      if (isPlayingAll) {
+        stopAllPlayback();
+        playSingleCell(cell, index);
         return;
       }
 
-      if (sequenceState === 'completed') {
-        playSingleCell(cell, index);
+      // If sequence is completed or idle, allow clicking any cell
+      if (sequenceState === 'completed' || sequenceState === 'idle') {
+        // First cell starts the full sequence, others play individually
+        if (isFirst) {
+          handlePlayClick();
+        } else {
+          playSingleCell(cell, index);
+        }
+        return;
+      }
+
+      // If paused, first cell resumes, others play individually
+      if (sequenceState === 'paused') {
+        if (isFirst) {
+          handlePlayClick();
+        } else {
+          playSingleCell(cell, index);
+        }
       }
     },
-    [handlePlayClick, playSingleCell, sequenceState],
+    [handlePlayClick, playSingleCell, sequenceState, isPlayingAll, stopAllPlayback],
   );
 
   const handleCellKeyDown = useCallback(
@@ -338,40 +400,36 @@ export default function AISpeakRepeatSlide({
 
   return (
     <div className="flex h-full w-full flex-col px-6 py-10 leading-relaxed md:leading-loose pt-2 md:pt-4">
-      <p className="text-base font-semibold mb-4 text-[#192026]">
-        Ta mission : écoute et répète chaque élément.
-      </p>
-      {note && (
-        <div className="mb-4 self-start text-left">
-          <ContentBox className="text-base">{note}</ContentBox>
-        </div>
+      {showTitle && <h2 className="mb-4 md:mb-6 text-left text-2xl font-normal tracking-wide text-balance text-[#222326]">{showTitle}</h2>}
+      {showSubtitle && <p className="mb-4 md:mb-6 text-left text-lg text-[#192026]/80 text-balance">{showSubtitle}</p>}
+      {showNote && (
+        <p className="mb-2 text-base text-[#192026]">{showNote}</p>
       )}
       <div className="mx-auto flex max-w-3xl flex-col items-center text-center text-[#192026]">
-        {title && <h2 className="mb-4 md:mb-6 text-3xl font-semibold text-balance">{title}</h2>}
-        {subtitle && <p className="mb-4 md:mb-5 text-lg text-[#192026]/80 text-balance">{subtitle}</p>}
         {error && <p className="mb-4 md:mb-5 mt-2 text-sm text-[#8b6a2b] bg-amber-50 px-3 py-2 rounded-md">{error}</p>}
       </div>
 
       <div className="flex flex-1 flex-col">
-        <div className="flex flex-1 items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            {rows.map((line, rowIndex) => (
+        <div className="flex flex-1 items-center justify-center -mt-8">
+          <div className="w-full max-w-4xl px-4">
+            <div className="flex flex-col items-center gap-4">
+              {rows.map((line, rowIndex) => (
               <div
                 key={`row-${rowIndex}`}
                 className={['flex flex-wrap justify-center', gapClass].filter(Boolean).join(' ')}
               >
-                {line.map((cell, index) => {
-                  const globalIndex = rowStartIndices[rowIndex] + index;
-                const colorClass = getElementColor(globalIndex);
-                const isFirst = globalIndex === 0;
-                const isButton = isFirst || sequenceState === 'completed';
+                      {line.map((cell, index) => {
+                        const globalIndex = rowStartIndices[rowIndex] + index;
+                        const isFirst = globalIndex === 0;
+                        // All letters are always clickable
+                        const isButton = true;
 
                 return (
                   <span
                     key={`${cell.label}-${globalIndex}`}
-                    className={`flex h-16 w-16 items-center justify-center text-center text-[2em] ${colorClass} ${
+                    className={`flex h-16 items-center justify-center rounded-xl border border-[#e3e0dc] bg-transparent px-4 text-center text-[4em] font-normal font-sans text-[#222326] ${
                       isButton
-                        ? 'cursor-pointer transition-colors duration-200 hover:bg-[#e8e5e1] focus:outline-none focus:ring-2 focus:ring-[#cfcac5] focus:ring-offset-2 focus:ring-offset-transparent'
+                        ? 'cursor-pointer transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0c9599] focus-visible:ring-offset-2'
                         : ''
                     }`}
                     role={isButton ? 'button' : undefined}
@@ -391,23 +449,28 @@ export default function AISpeakRepeatSlide({
                 })}
               </div>
             ))}
+            </div>
           </div>
         </div>
         <div className="flex justify-center pb-4">
-          <SoftIconButton
-            ariaLabel={
-              isPlaying
-                ? 'Mettre en pause la lecture'
-                : sequenceState === 'paused' && nextIndexRef.current < flatElements.length
-                  ? 'Reprendre la lecture'
-                  : 'Lancer la lecture'
-            }
-            onClick={isPlaying ? pauseSequence : handlePlayClick}
-            disabled={!isPlaying && flatElements.length === 0}
-            className={isPlaying ? 'text-white bg-[#077373]' : ''}
+          <button
+            type="button"
+            onClick={handleTogglePlayAll}
+            disabled={flatElements.length === 0}
+            className="flex flex-col items-center gap-1 rounded-xl border border-[#e3e0dc] bg-transparent px-4 py-2 text-center font-normal font-sans text-[#222326] transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0c9599] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
-            {isPlaying ? <PauseIcon /> : <PlayIcon />}
-          </SoftIconButton>
+            {isPlayingAll ? (
+              <>
+                <PauseIcon />
+                <span className="text-xs text-[#222326]">Pause</span>
+              </>
+            ) : (
+              <>
+                <PlayIcon />
+                <span className="text-xs text-[#222326]">Play all</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>

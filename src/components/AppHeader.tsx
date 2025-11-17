@@ -5,7 +5,7 @@ import LogoutButton from "@/components/LogoutButton";
 
 export default function AppHeader({ email }: { email: string | null }) {
   return (
-    <header className="border-b border-black/10 mb-8 md:mb-12">
+    <header className="border-b border-black/10 mb-5 md:mb-8">
       <div className="flex w-full flex-col gap-3 py-3 md:flex-row md:items-center md:justify-between">
         {/* LEFT: Brand + nav links */}
         <div className="flex flex-wrap items-center gap-4">
