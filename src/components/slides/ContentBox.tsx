@@ -11,7 +11,7 @@ type ContentBoxProps = {
 export default function ContentBox({ children, className }: ContentBoxProps) {
   return (
     <PaperCard 
-      className={['inline-block max-w-full p-0 text-[1.25em] leading-relaxed text-[#192026]', className]
+      className={['inline-block max-w-full p-0 text-[1.25em] leading-relaxed sm:leading-loose text-[#192026]', className]
         .filter(Boolean)
         .join(' ')}
       style={{ backgroundColor: '#e7f4f5' }}

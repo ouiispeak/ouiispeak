@@ -26,17 +26,17 @@ const playPauseIconProps: SVGProps<SVGSVGElement> = {
   strokeWidth: 2,
   strokeLinecap: 'round',
   strokeLinejoin: 'round',
-  className: 'h-6 w-6',
+  className: 'h-4 w-4',
   'aria-hidden': true,
 };
 
-const PlayIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
+const PlayIcon = ({ className = 'h-4 w-4' }: { className?: string }) => (
   <svg {...playPauseIconProps} className={className}>
     <path d="M7 5l12 7-12 7V5z" />
   </svg>
 );
 
-const PauseIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
+const PauseIcon = ({ className = 'h-4 w-4' }: { className?: string }) => (
   <svg {...playPauseIconProps} className={className}>
     <line x1="9" y1="5" x2="9" y2="19" />
     <line x1="15" y1="5" x2="15" y2="19" />
@@ -49,7 +49,7 @@ export default function AISpeakRepeatSlide({
   lines,
   note,
   defaultLang = DEFAULT_SPEECH_LANG,
-  gapClass = 'gap-4',
+  gapClass = 'gap-3 sm:gap-4',
 }: AISpeakRepeatProps) {
   // Parse NS (no show) syntax
   const showTitle = getShowValue(title);
@@ -73,6 +73,7 @@ export default function AISpeakRepeatSlide({
   const [playedIndices, setPlayedIndices] = useState<Set<number>>(new Set());
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPlayingAll, setIsPlayingAll] = useState(false);
+  const [hasPlayedAllInitially, setHasPlayedAllInitially] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sequenceState, setSequenceState] = useState<'idle' | 'playing' | 'paused' | 'completed'>(
     'idle',
@@ -210,9 +211,6 @@ export default function AISpeakRepeatSlide({
 
           if (activeSequenceRef.current !== sequenceId) break;
 
-          const effectiveDuration = duration > 0 ? duration : 0.05;
-          const pauseMs = effectiveDuration * 0.05 * 1000;
-
           setPlayedIndices((prev) => {
             if (prev.has(index)) return prev;
             const next = new Set(prev);
@@ -221,7 +219,8 @@ export default function AISpeakRepeatSlide({
           });
 
           nextIndexRef.current = index + 1;
-          await wait(pauseMs);
+          // 1.5 second delay between elements
+          await wait(1500);
         }
       } catch (err) {
         console.error(err);
@@ -254,8 +253,15 @@ export default function AISpeakRepeatSlide({
         nextIndexRef.current >= 0;
 
       if (!canResume) {
-        resetStateForNewSequence();
-        nextIndexRef.current = 0;
+        // Only reset if this is the initial play all
+        if (!hasPlayedAllInitially) {
+          resetStateForNewSequence();
+          nextIndexRef.current = 0;
+          setHasPlayedAllInitially(true);
+        } else {
+          // After initial play, resume from current position
+          return;
+        }
       }
 
       currentAudioRef.current?.pause();
@@ -270,7 +276,7 @@ export default function AISpeakRepeatSlide({
       setError(null);
       await runSequence(startIndex, sequenceId);
     },
-    [flatElements.length, isPlaying, resetStateForNewSequence, runSequence, sequenceState],
+    [flatElements.length, isPlaying, resetStateForNewSequence, runSequence, sequenceState, hasPlayedAllInitially],
   );
 
   const stopAllPlayback = useCallback(() => {
@@ -283,7 +289,7 @@ export default function AISpeakRepeatSlide({
     setIsPlaying(false);
     setIsPlayingAll(false);
     setCurrentIndex(null);
-    setSequenceState('idle');
+    // sequenceState is managed by the caller
   }, []);
 
   const handlePlayClick = useCallback(() => {
@@ -296,11 +302,20 @@ export default function AISpeakRepeatSlide({
 
   const handleTogglePlayAll = useCallback(() => {
     if (isPlayingAll) {
+      // Pause the sequence - set state to paused before stopping
+      setSequenceState('paused');
       stopAllPlayback();
     } else {
-      startSequence();
+      // Allow starting if it's the initial play or resuming from pause
+      if (!hasPlayedAllInitially) {
+        // First time - start from beginning
+        startSequence();
+      } else if (sequenceState === 'paused') {
+        // Resume from where it left off
+        startSequence({ resume: true });
+      }
     }
-  }, [isPlayingAll, stopAllPlayback, startSequence]);
+  }, [isPlayingAll, stopAllPlayback, startSequence, hasPlayedAllInitially, sequenceState]);
 
   const pauseSequence = useCallback(() => {
     if (!isPlaying && currentAudioRef.current === null) return;
@@ -389,30 +404,46 @@ export default function AISpeakRepeatSlide({
     [handleCellClick],
   );
 
-  const getElementColor = useCallback(
+  const getElementStyles = useCallback(
     (globalIndex: number) => {
-      if (currentIndex === globalIndex) return 'text-[#0c9599]';
-      if (playedIndices.has(globalIndex)) return 'text-[#736e65]';
-      return 'text-[#192026]';
+      if (currentIndex === globalIndex) {
+        // Currently being played - teal color
+        return {
+          textColor: 'text-[#0c9599]',
+          borderColor: 'border-[#0c9599]',
+        };
+      }
+      if (playedIndices.has(globalIndex)) {
+        // Finished playing - gray color
+        return {
+          textColor: 'text-[#a6a198]',
+          borderColor: 'border-[#a6a198]',
+        };
+      }
+      // Default - not played yet
+      return {
+        textColor: 'text-[#222326]',
+        borderColor: 'border-[#e3e0dc]',
+      };
     },
     [currentIndex, playedIndices],
   );
 
   return (
-    <div className="flex h-full w-full flex-col px-6 py-10 leading-relaxed md:leading-loose pt-2 md:pt-4">
-      {showTitle && <h2 className="mb-4 md:mb-6 text-left text-2xl font-normal tracking-wide text-balance text-[#222326]">{showTitle}</h2>}
-      {showSubtitle && <p className="mb-4 md:mb-6 text-left text-lg text-[#192026]/80 text-balance">{showSubtitle}</p>}
+    <div className="flex min-h-[60vh] md:h-full w-full flex-col px-4 py-6 sm:px-6 sm:py-8 lg:py-10 leading-relaxed md:leading-loose pt-2 md:pt-4">
+      {showTitle && <h2 className="mb-3 sm:mb-4 md:mb-6 text-left text-xl sm:text-2xl md:text-3xl font-normal tracking-wide text-balance text-[#222326]">{showTitle}</h2>}
+      {showSubtitle && <p className="mb-3 sm:mb-4 md:mb-6 text-left text-base sm:text-lg leading-relaxed sm:leading-loose text-[#192026]/80 text-balance">{showSubtitle}</p>}
       {showNote && (
-        <p className="mb-2 text-base text-[#192026]">{showNote}</p>
+        <p className="mb-2 text-base sm:text-lg leading-relaxed sm:leading-loose text-[#192026]">{showNote}</p>
       )}
       <div className="mx-auto flex max-w-3xl flex-col items-center text-center text-[#192026]">
         {error && <p className="mb-4 md:mb-5 mt-2 text-sm text-[#8b6a2b] bg-amber-50 px-3 py-2 rounded-md">{error}</p>}
       </div>
 
       <div className="flex flex-1 flex-col">
-        <div className="flex flex-1 items-center justify-center -mt-8">
-          <div className="w-full max-w-4xl px-4">
-            <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-1 items-center justify-center sm:-mt-6 md:-mt-8">
+          <div className="w-full max-w-2xl sm:max-w-3xl md:max-w-4xl px-4">
+            <div className="flex flex-col items-center gap-3 sm:gap-4">
               {rows.map((line, rowIndex) => (
               <div
                 key={`row-${rowIndex}`}
@@ -423,11 +454,12 @@ export default function AISpeakRepeatSlide({
                         const isFirst = globalIndex === 0;
                         // All letters are always clickable
                         const isButton = true;
+                        const styles = getElementStyles(globalIndex);
 
                 return (
                   <span
                     key={`${cell.label}-${globalIndex}`}
-                    className={`flex h-16 items-center justify-center rounded-xl border border-[#e3e0dc] bg-transparent px-4 text-center text-[4em] font-normal font-sans text-[#222326] ${
+                    className={`flex h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14 lg:h-16 lg:w-16 items-center justify-center rounded-xl border ${styles.borderColor} bg-transparent px-4 text-center text-xl sm:text-2xl md:text-3xl lg:text-4xl font-normal font-sans ${styles.textColor} transition-colors duration-200 ${
                       isButton
                         ? 'cursor-pointer transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0c9599] focus-visible:ring-offset-2'
                         : ''
@@ -456,8 +488,12 @@ export default function AISpeakRepeatSlide({
           <button
             type="button"
             onClick={handleTogglePlayAll}
-            disabled={flatElements.length === 0}
-            className="flex flex-col items-center gap-1 rounded-xl border border-[#e3e0dc] bg-transparent px-4 py-2 text-center font-normal font-sans text-[#222326] transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0c9599] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            disabled={
+              flatElements.length === 0 || 
+              (hasPlayedAllInitially && sequenceState === 'completed' && !isPlayingAll) ||
+              (hasPlayedAllInitially && sequenceState === 'idle' && !isPlayingAll)
+            }
+            className="flex flex-col items-center gap-1 rounded-xl border border-[#e3e0dc] bg-transparent px-4 py-2.5 text-center font-normal font-sans text-sm text-[#222326] transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0c9599] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 sm:px-5 sm:py-3 sm:text-base"
           >
             {isPlayingAll ? (
               <>

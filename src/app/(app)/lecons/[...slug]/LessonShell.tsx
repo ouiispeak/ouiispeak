@@ -7,6 +7,8 @@ import LessonChrome from "./LessonChrome";
 import LessonSidebar from "./LessonSidebar";
 import SoftIconButton from "@/components/CircleButton";
 import LessonProgressBar from "@/components/lesson/LessonProgressBar";
+import JournalNotesEditor from "@/components/lesson/JournalNotesEditor";
+import RaichelHelpEditor from "@/components/lesson/RaichelHelpEditor";
 
 const ChevronLeftIcon = () => (
   <svg
@@ -16,7 +18,7 @@ const ChevronLeftIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className="h-7 w-7"
+    className="h-4 w-4"
     aria-hidden="true"
   >
     <path d="m15 18-6-6 6-6" />
@@ -31,7 +33,7 @@ const ChevronRightIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className="h-7 w-7"
+    className="h-4 w-4"
     aria-hidden="true"
   >
     <path d="m9 18 6-6-6-6" />
@@ -51,8 +53,21 @@ export default function LessonShell({ lessonSlug, slides }: Props) {
   const [lastVisibleSidebarState, setLastVisibleSidebarState] =
     useState<VisibleSidebarState>('full');
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isRaichelOpen, setIsRaichelOpen] = useState(false);
+  
   const handleRestartAction = () => {
     setCurrentIndex(0);
+  };
+
+  const handleToggleEditor = () => {
+    setIsEditorOpen(!isEditorOpen);
+    if (isRaichelOpen) setIsRaichelOpen(false);
+  };
+
+  const handleToggleRaichel = () => {
+    setIsRaichelOpen(!isRaichelOpen);
+    if (isEditorOpen) setIsEditorOpen(false);
   };
 
   const handleSidebarStateChange = (next: SidebarState) => {
@@ -106,8 +121,28 @@ export default function LessonShell({ lessonSlug, slides }: Props) {
           lastVisibleSidebarState={lastVisibleSidebarState}
           onSidebarStateChange={handleSidebarStateChange}
           onRestartAction={handleRestartAction}
+          onToggleEditor={handleToggleEditor}
+          isEditorOpen={isEditorOpen}
+          onToggleRaichel={handleToggleRaichel}
+          isRaichelOpen={isRaichelOpen}
         />
       }
+      editorPanel={
+        isEditorOpen ? (
+          <JournalNotesEditor
+            lessonSlug={lessonSlug}
+            currentSlideId={currentSlide?.id}
+            isOpen={isEditorOpen}
+            onClose={() => setIsEditorOpen(false)}
+          />
+        ) : isRaichelOpen ? (
+          <RaichelHelpEditor
+            isOpen={isRaichelOpen}
+            onClose={() => setIsRaichelOpen(false)}
+          />
+        ) : null
+      }
+      isEditorOpen={isEditorOpen || isRaichelOpen}
     >
       {!hasCanonicalSlug && (
         <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-900">
@@ -118,8 +153,9 @@ export default function LessonShell({ lessonSlug, slides }: Props) {
       <LessonPlayer
         slides={playableSlides}
         currentIndex={effectiveIndex}
+        onRestart={handleRestartAction}
       />
-      <div className="flex items-center justify-between gap-4 text-base">
+      <div className="flex items-center justify-between gap-2 sm:gap-3 md:gap-4 text-base">
         <SoftIconButton
           ariaLabel="Aller à la diapositive précédente"
           onClick={() => setCurrentIndex((value) => Math.max(0, value - 1))}

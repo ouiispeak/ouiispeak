@@ -6,7 +6,7 @@ import { getSlidesForLesson } from '@/lessons/registry';
 export const dynamic = 'force-dynamic';
 
 type PageProps = {
-  params: { module: string; lesson: string };
+  params: Promise<{ module: string; lesson: string }>;
 };
 
 function getLessonContent(slug: string) {
@@ -18,7 +18,7 @@ export default async function LessonPage({ params }: PageProps) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/auth');
 
-  const { module, lesson } = params;
+  const { module, lesson } = await params;
   const lessonSlug = `${module}/${lesson}` || 'templates/blank';
   const slides = getLessonContent(lessonSlug);
 

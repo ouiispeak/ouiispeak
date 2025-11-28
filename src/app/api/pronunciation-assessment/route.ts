@@ -1,6 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const WHISPER_BASE_URL = process.env.WHISPER_BASE_URL?.replace(/\/$/, '') ?? null;
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
+const resolveWhisperBaseUrl = () => {
+  const explicit =
+    process.env.WHISPER_BASE_URL ??
+    process.env.NEXT_PUBLIC_WHISPER_BASE_URL ??
+    null;
+
+  if (explicit) {
+    return explicit.replace(/\/$/, '');
+  }
+
+  if (process.env.NODE_ENV !== 'production') {
+    // Default to the bundled whisper dev server when running locally.
+    return 'http://127.0.0.1:8000';
+  }
+
+  return null;
+};
+
+const WHISPER_BASE_URL = resolveWhisperBaseUrl();
 const WHISPER_TIMEOUT_MS = Number(process.env.WHISPER_TIMEOUT_MS ?? 15000);
 
 function normalizeText(text: string) {
@@ -83,6 +105,9 @@ export async function POST(req: NextRequest) {
       method: 'POST',
       body: whisperForm,
       signal: controller.signal,
+      headers: {
+        Accept: 'application/json',
+      },
     });
     clearTimeout(timeout);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState } from "react";
 import type { SVGProps } from "react";
 import { useLessonNotes } from "@/components/lesson/useLessonNotes";
 import { useLessonBookmarks } from "@/components/lesson/useLessonBookmarks";
@@ -14,7 +14,7 @@ const iconProps: SVGProps<SVGSVGElement> = {
   strokeWidth: 2,
   strokeLinecap: "round",
   strokeLinejoin: "round",
-  className: "h-5 w-5 opacity-70 hover:opacity-100 transition-opacity duration-200",
+  className: "h-4 w-4 opacity-70 hover:opacity-100 transition-opacity duration-200",
   "aria-hidden": true,
 };
 
@@ -125,6 +125,10 @@ type LessonSidebarProps = {
   sidebarState?: 'full' | 'collapsed' | 'hidden';
   onSidebarStateChange?: (next: 'full' | 'collapsed' | 'hidden') => void;
   lastVisibleSidebarState?: 'full' | 'collapsed';
+  onToggleEditor?: () => void;
+  isEditorOpen?: boolean;
+  onToggleRaichel?: () => void;
+  isRaichelOpen?: boolean;
 };
 
 export default function LessonSidebar({
@@ -134,65 +138,18 @@ export default function LessonSidebar({
   sidebarState,
   onSidebarStateChange,
   lastVisibleSidebarState,
+  onToggleEditor,
+  isEditorOpen = false,
+  onToggleRaichel,
+  isRaichelOpen = false,
 }: LessonSidebarProps) {
   const effectiveSidebarState = sidebarState ?? 'full';
   const router = useRouter();
-  const { notes, add, loading: notesLoading } = useLessonNotes(lessonSlug);
+  const { notes, loading: notesLoading } = useLessonNotes(lessonSlug);
   const { isBookmarked, add: addBookmark, remove: removeBookmark, loading: bookmarkLoading } = useLessonBookmarks(lessonSlug);
   
   // Local UI state
-  const [isNotesOpen, setIsNotesOpen] = useState(false);
-  const [notesText, setNotesText] = useState('');
-  const [isSavingNotes, setIsSavingNotes] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
-  const [isEditingNote, setIsEditingNote] = useState(false);
-
-  const currentSlideNote = useMemo(() => {
-    if (!currentSlideId) return null;
-    return notes.find(n => n.slide_id === currentSlideId) ?? null;
-  }, [notes, currentSlideId]);
-  
-  useEffect(() => {
-    // When the slide changes, reset editing state so we can sync with stored note
-    setIsEditingNote(false);
-  }, [currentSlideId]);
-
-  // Keep the textarea in sync with the stored note only when the user isn't actively editing.
-  useEffect(() => {
-    if (isEditingNote) return;
-    if (!isNotesOpen) return;
-
-    setNotesText(currentSlideNote?.content ?? '');
-  }, [currentSlideNote, isEditingNote, isNotesOpen]);
-  
-  const handleNotesToggle = () => {
-    const nextOpen = !isNotesOpen;
-    setIsNotesOpen(nextOpen);
-
-    if (nextOpen) {
-      setIsEditingNote(false);
-      setNotesText(currentSlideNote?.content ?? '');
-    } else {
-      setIsEditingNote(false);
-    }
-  };
-
-  const handleSaveNotes = async () => {
-    if (!notesText.trim() || !currentSlideId) return;
-    
-    setIsSavingNotes(true);
-    try {
-      await add(notesText.trim(), currentSlideId);
-      setIsNotesOpen(false);
-      setIsEditingNote(false);
-      setNotesText('');
-    } catch (error) {
-      console.error('Failed to save notes:', error);
-    } finally {
-      setIsSavingNotes(false);
-    }
-  };
 
   const handleBookmarkToggle = async () => {
     if (!currentSlideId) return;
@@ -206,10 +163,6 @@ export default function LessonSidebar({
     } catch (error) {
       console.error('Failed to toggle bookmark:', error);
     }
-  };
-
-  const handleHelpClick = () => {
-    setShowHelp(!showHelp);
   };
 
   const handleRestartClick = () => {
@@ -265,16 +218,16 @@ export default function LessonSidebar({
     <div className="flex h-full w-full">
       <div
         className={[
-          'flex w-full justify-between gap-6 md:h-full md:flex-col md:justify-between md:gap-8',
+          'flex w-full justify-between gap-3 sm:gap-4 md:h-full md:flex-col md:justify-between md:gap-6 lg:gap-8',
           'items-start md:items-center',
         ].join(' ')}
       >
-        <div className={`flex w-full flex-col ${sectionAlignmentClass} gap-4`}>
+        <div className={`flex w-full flex-col ${sectionAlignmentClass} gap-3 sm:gap-4`}>
           <div className={`flex w-full flex-col ${sectionAlignmentClass} gap-3`}>
             <div className={iconLayoutClass}>
               <SoftIconButton
-                ariaLabel={isNotesOpen ? "Fermer le carnet" : "Ouvrir le carnet"}
-                onClick={handleNotesToggle}
+                ariaLabel={isEditorOpen ? "Fermer le journal" : "Ouvrir le journal"}
+                onClick={onToggleEditor}
                 disabled={notesLoading}
                 className="flex-shrink-0"
               >
@@ -284,37 +237,6 @@ export default function LessonSidebar({
                 Journal
               </span>
             </div>
-            {effectiveSidebarState === 'full' && isNotesOpen && (
-              <div className="w-full space-y-2 md:w-48">
-                <textarea
-                  value={notesText}
-                  onChange={(e) => {
-                    if (!isEditingNote) {
-                      setIsEditingNote(true);
-                    }
-                    setNotesText(e.target.value);
-                  }}
-                  placeholder="Ajoutez vos notes ici..."
-                  rows={4}
-                  className="w-full rounded-md border border-slate-200 p-2 text-sm"
-                />
-                <div className="flex gap-2 text-sm">
-                  <button
-                    onClick={handleSaveNotes}
-                    disabled={isSavingNotes || !notesText.trim()}
-                    className="rounded-lg px-6 py-3 bg-[#e8e5e1] text-[#222326] hover:bg-[#e1ded9] transition-colors duration-200 disabled:opacity-50"
-                  >
-                    {isSavingNotes ? "Sauvegarde..." : "Sauvegarder"}
-                  </button>
-                  <button
-                    onClick={() => setIsNotesOpen(false)}
-                    className="rounded-lg px-6 py-3 bg-[#e8e5e1] text-[#222326] hover:bg-[#e1ded9] transition-colors duration-200"
-                  >
-                    Fermer
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
 
           <div className={iconLayoutClass}>
@@ -337,28 +259,21 @@ export default function LessonSidebar({
 
           <div className={`flex w-full flex-col ${sectionAlignmentClass} gap-2`}>
             <div className={iconLayoutClass}>
-              <SoftIconButton ariaLabel="Raichel" onClick={handleHelpClick} className="flex-shrink-0">
+              <SoftIconButton 
+                ariaLabel={isRaichelOpen ? "Fermer Raichel" : "Ouvrir Raichel"} 
+                onClick={onToggleRaichel} 
+                className="flex-shrink-0"
+              >
                 <BrainIcon />
               </SoftIconButton>
               <span className={labelClassName} aria-hidden={!isFull}>
                 Aide
               </span>
             </div>
-            {effectiveSidebarState === 'full' && showHelp && (
-              <div className="w-full rounded-md bg-[#f6f5f3] p-3 text-sm text-[#333] md:w-auto">
-                Assistance intelligente arrive bientôt ✨
-                <button
-                  onClick={() => setShowHelp(false)}
-                  className="mt-2 rounded-xl px-6 py-3 bg-[#e8e5e1] text-[#222326] hover:bg-[#e1ded9] transition-colors duration-200"
-                >
-                  Fermer
-                </button>
-              </div>
-            )}
           </div>
         </div>
 
-        <div className={`flex w-full flex-col ${sectionAlignmentClass} gap-4`}>
+        <div className={`flex w-full flex-col ${sectionAlignmentClass} gap-3 sm:gap-4`}>
           {onSidebarStateChange && (
             <div className={`flex w-full flex-col ${sectionAlignmentClass} gap-2`}>
               <div className={iconLayoutClass}>

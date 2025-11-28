@@ -13,9 +13,9 @@ export default function TitleSlide({ title, subtitle }: TitleSlideProps) {
   const showSubtitle = getShowValue(subtitle);
   
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center px-6 py-8 text-center md:px-10 leading-relaxed md:leading-loose pt-2 md:pt-4">
+    <div className="flex min-h-[60vh] md:h-full w-full flex-col items-center justify-center px-4 py-6 sm:px-6 sm:py-8 text-center md:px-10 leading-relaxed md:leading-loose pt-2 md:pt-4">
       {showTitle && (
-        <h1 className="mb-4 md:mb-6 max-w-3xl text-balance font-normal text-[#0c9599]" style={{ fontSize: 'clamp(3.375rem, 6vw, 5.625rem)' }}>
+        <h1 className="mb-3 sm:mb-4 md:mb-6 max-w-3xl text-balance font-normal text-[#0c9599]" style={{ fontSize: 'clamp(3.375rem, 6vw, 5.625rem)' }}>
           {showTitle}
         </h1>
       )}
