@@ -2,6 +2,7 @@
 
 import { SlideRegistry } from '@/components/slides';
 import type { Slide } from '@/lessons/types';
+import type { ReactElement } from 'react';
 
 type LessonPlayerProps = {
   slides: Slide[];
@@ -17,7 +18,7 @@ export default function LessonPlayer({ slides, currentIndex, onRestart }: Lesson
   const safeIndex = Math.min(currentIndex, slides.length - 1);
   const current = slides[safeIndex];
   const SlideComponent = SlideRegistry[current.type] as
-    | ((props: Slide['props'] & { onRestart?: () => void }) => JSX.Element)
+    | ((props: Slide['props'] & { onRestart?: () => void }) => ReactElement)
     | undefined;
 
   if (!SlideComponent) {

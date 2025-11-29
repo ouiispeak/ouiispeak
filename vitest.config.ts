@@ -13,7 +13,11 @@ export default defineConfig({
     },
   },
   // Disable CSS processing entirely for tests
-  css: false,
+  css: {
+    postcss: {
+      plugins: [],
+    },
+  },
   // Use esbuild for faster transforms
   esbuild: {
     target: 'node18',

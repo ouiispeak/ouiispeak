@@ -149,8 +149,12 @@ export default function TextSlide({
                     <div className="flex items-start gap-3">
                       <button
                         type="button"
-                        onClick={() => playText(index, showValue)}
-                        disabled={isLoadingBlock}
+                        onClick={() => {
+                          if (showValue) {
+                            playText(index, showValue);
+                          }
+                        }}
+                        disabled={isLoadingBlock || !showValue}
                         className={`flex-shrink-0 mt-1 p-2 rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0c9599] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                           isPlaying
                             ? 'border-[#0c9599] bg-[#0c9599] text-white'

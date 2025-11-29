@@ -1,5 +1,4 @@
-import { redirect } from 'next/navigation';
-import { createServerSupabase } from '@/lib/supabaseServer';
+import { requireUser } from '@/lib/auth';
 import LessonShell from '@/app/(app)/lecons/[...slug]/LessonShell';
 import { resolveLessonFromSlug } from '@/lib/resolveLesson';
 
@@ -10,9 +9,7 @@ type PageProps = {
 };
 
 export default async function LessonPage({ params }: PageProps) {
-  const supabase = await createServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/auth');
+  await requireUser();
 
   const { module, lesson } = await params;
   const lessonSlug = `${module}/${lesson}` || 'templates/blank';

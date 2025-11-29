@@ -1,6 +1,5 @@
 // src/app/(app)/tableau-de-bord/page.tsx
-import { redirect } from 'next/navigation';
-import { createServerSupabase } from '@/lib/supabaseServer';
+import { requireUser } from '@/lib/auth';
 import {
   fetchModuleAndLessons,
   fetchUserLessonProgress,
@@ -19,14 +18,7 @@ type ViewItem = {
 };
 
 export default async function TableauDeBordPage() {
-  const supabase = await createServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect('/auth');
-  }
+  const { supabase, user } = await requireUser();
 
   // Load module + lessons
   const { module, lessons } = await fetchModuleAndLessons(supabase, 'module-1');
