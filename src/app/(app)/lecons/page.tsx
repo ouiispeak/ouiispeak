@@ -2,16 +2,13 @@ import Link from 'next/link';
 import { createServerSupabase } from '@/lib/supabaseServer';
 import { registeredLessonSlugs } from '@/lessons/registry';
 import ModuleDropdown from '@/components/ModuleDropdown';
+import {
+  parseLessonSlug,
+  humanizeLessonSlug,
+  type LessonInfo,
+} from '@/lib/lessonSlug';
 
 export const dynamic = 'force-dynamic';
-
-type LessonInfo = {
-  slug: string;
-  module: string;
-  lesson: string;
-  displayName: string;
-  moduleKey: string; // e.g., "module-1"
-};
 
 const moduleOrder = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
@@ -25,44 +22,6 @@ export default async function LessonsIndex() {
     (slug) => slug !== 'templates/blank' && !slug.startsWith('slide template ref'),
   );
 
-  const humanizeSlug = (slug: string) => {
-    if (slug.includes('slide-templates')) {
-      return 'Prototype de diapositive';
-    }
-
-    return slug
-      .split('/')
-      .map((segment) => segment.replace(/-/g, ' '))
-      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-      .join(' · ');
-  };
-
-  const parseLessonSlug = (slug: string): LessonInfo | null => {
-    if (slug.includes('slide-templates')) {
-      return null; // Skip template slides
-    }
-
-    const parts = slug.split('/');
-    if (parts.length < 2) return null;
-
-    const modulePart = parts[0];
-    const lessonPart = parts[1];
-
-    // Extract module level (e.g., "a0-module-1" -> "A0")
-    const moduleMatch = modulePart.match(/^([a-c]\d+)/i);
-    if (!moduleMatch) return null;
-
-    // Extract module key (e.g., "a0-module-1" -> "module-1")
-    const moduleKeyMatch = modulePart.match(/module-(\d+)/i);
-    const moduleKey = moduleKeyMatch ? `module-${moduleKeyMatch[1]}` : modulePart;
-
-    const moduleLevel = moduleMatch[1].toUpperCase();
-    const lesson = lessonPart;
-    const displayName = humanizeSlug(slug);
-
-    return { slug, module: moduleLevel, lesson, displayName, moduleKey };
-  };
-
   // Group lessons by level, then by module
   const lessonsByLevelAndModule: Record<string, Record<string, LessonInfo[]>> = {};
   const otherLessons: LessonInfo[] = [];
@@ -75,7 +34,7 @@ export default async function LessonsIndex() {
         slug,
         module: 'Other',
         lesson: slug,
-        displayName: humanizeSlug(slug),
+        displayName: humanizeLessonSlug(slug),
         moduleKey: 'other',
       });
       return;
