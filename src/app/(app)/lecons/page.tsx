@@ -56,11 +56,11 @@ export default async function LessonsIndex() {
     const moduleKeyMatch = modulePart.match(/module-(\d+)/i);
     const moduleKey = moduleKeyMatch ? `module-${moduleKeyMatch[1]}` : modulePart;
 
-    const module = moduleMatch[1].toUpperCase();
+    const moduleLevel = moduleMatch[1].toUpperCase();
     const lesson = lessonPart;
     const displayName = humanizeSlug(slug);
 
-    return { slug, module, lesson, displayName, moduleKey };
+    return { slug, module: moduleLevel, lesson, displayName, moduleKey };
   };
 
   // Group lessons by level, then by module
