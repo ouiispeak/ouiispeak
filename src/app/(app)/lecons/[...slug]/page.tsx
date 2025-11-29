@@ -1,25 +1,24 @@
 import type { Metadata } from 'next';
 import LessonShell from './LessonShell';
-import { getSlidesForLesson } from '@/lessons/registry';
+import { resolveLessonFromSlug } from '@/lib/resolveLesson';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Lecture de la leçon' };
 
 type Params = { slug: string[] };
 
-function getLessonContent(slug: string) {
-  return getSlidesForLesson(slug);
-}
-
 export default async function Page({ params }: { params: Params }) {
   const segments = params.slug;
 
-  const lessonSlug =
+  // Handle special "play" prefix: drop it if present
+  const normalizedSegments =
     segments[0] === 'play'
-      ? segments.slice(1).join('/')
-      : segments.join('/');
+      ? segments.slice(1)
+      : segments;
 
-  const slides = getLessonContent(lessonSlug);
+  const resolved = resolveLessonFromSlug(normalizedSegments);
+  const slides = resolved?.slides ?? [];
+  const lessonSlug = resolved?.lessonSlug ?? normalizedSegments.join('/');
 
   return <LessonShell lessonSlug={lessonSlug} slides={slides} />;
 }
