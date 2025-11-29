@@ -21,7 +21,7 @@ export default async function TableauDeBordPage() {
   const { supabase, user } = await requireUser();
 
   // Load module + lessons
-  const { module, lessons } = await fetchModuleAndLessons(supabase, 'module-1');
+  const { module: _module, lessons } = await fetchModuleAndLessons(supabase, 'module-1');
 
   // Filter to only show lessons that exist in the registry (have actual lesson files)
   const validLessons = lessons.filter((lesson) => 

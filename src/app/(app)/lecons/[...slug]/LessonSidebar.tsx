@@ -145,7 +145,7 @@ export default function LessonSidebar({
 }: LessonSidebarProps) {
   const effectiveSidebarState = sidebarState ?? 'full';
   const router = useRouter();
-  const { notes, loading: notesLoading } = useLessonNotes(lessonSlug);
+  const { notes: _notes, loading: notesLoading } = useLessonNotes(lessonSlug);
   const { isBookmarked, add: addBookmark, remove: removeBookmark, loading: bookmarkLoading } = useLessonBookmarks(lessonSlug);
   
   // Local UI state

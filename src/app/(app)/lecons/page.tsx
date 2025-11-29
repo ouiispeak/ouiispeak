@@ -15,7 +15,6 @@ const moduleOrder = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 export default async function LessonsIndex() {
   // @ts-ignore - TypeScript language server issue with Supabase types
   const supabase = await createServerSupabase();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   // @ts-ignore
   const { data: { user: _user } } = await supabase.auth.getUser();
   // Optional guard:

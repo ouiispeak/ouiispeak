@@ -9,7 +9,6 @@ import {
   type KeyboardEvent,
   type SVGProps,
 } from 'react';
-import ContentBox from './ContentBox';
 import type { AiSpeakRepeatCell, AiSpeakRepeatSlideProps } from '@/lessons/types';
 import { DEFAULT_SPEECH_LANG, type SupportedLang } from '@/lib/voices';
 import { fetchSpeechAsset, type SpeechAsset } from '@/lib/speech';
@@ -207,7 +206,7 @@ export default function AISpeakRepeatSlide({
 
           if (activeSequenceRef.current !== sequenceId) break;
 
-          const duration = await playAudioForIndex(asset, index, sequenceId);
+          const _duration = await playAudioForIndex(asset, index, sequenceId);
 
           if (activeSequenceRef.current !== sequenceId) break;
 
@@ -317,7 +316,7 @@ export default function AISpeakRepeatSlide({
     }
   }, [isPlayingAll, stopAllPlayback, startSequence, hasPlayedAllInitially, sequenceState]);
 
-  const pauseSequence = useCallback(() => {
+  const _pauseSequence = useCallback(() => {
     if (!isPlaying && currentAudioRef.current === null) return;
     stopAllPlayback();
   }, [isPlaying, stopAllPlayback]);

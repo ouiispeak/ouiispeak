@@ -3,7 +3,6 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
   type KeyboardEvent,
@@ -57,7 +56,7 @@ export default function SpeechMatchSlide({
   note,
   elements,
   defaultLang = DEFAULT_SPEECH_LANG,
-  gapClass = 'gap-3 sm:gap-4',
+  gapClass: _gapClass = 'gap-3 sm:gap-4',
 }: SpeechMatchSlideProps) {
   // Parse NS (no show) syntax
   const showTitle = getShowValue(title);
@@ -65,7 +64,6 @@ export default function SpeechMatchSlide({
   const showNote = getShowValue(note);
   
   const [currentTargetIndex, setCurrentTargetIndex] = useState<number | null>(null);
-  const [correctIndices, setCorrectIndices] = useState<Set<number>>(new Set());
   const [wrongIndex, setWrongIndex] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -206,7 +204,6 @@ export default function SpeechMatchSlide({
       // Check if clicked element matches the target
       if (index === currentTargetIndex) {
         // Correct answer
-        setCorrectIndices((prev) => new Set([...prev, index]));
         setCompletedIndices((prev) => new Set([...prev, index]));
         setWrongIndex(null);
         setMessage(null);

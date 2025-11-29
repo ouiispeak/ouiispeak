@@ -23,21 +23,6 @@ const AudioIcon = () => (
   </svg>
 );
 
-const PlayIcon = () => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="h-4 w-4"
-    aria-hidden="true"
-  >
-    <path d="M7 5l12 7-12 7V5z" />
-  </svg>
-);
-
 const PauseIcon = () => (
   <svg
     viewBox="0 0 24 24"
@@ -157,10 +142,6 @@ export default function AISpeakStudentRepeatSlide({
     
     return rows;
   }, [elementsList]);
-
-  const [wordResults, setWordResults] = useState<
-    Array<{ reference: string; actual: string | null; correct: boolean }[]>
-  >(() => elementsList.map(() => []));
 
   const [elementStatus, setElementStatus] = useState<ElementStatus[]>(
     () => elementsList.map(() => 'pending')
@@ -527,12 +508,6 @@ export default function AISpeakStudentRepeatSlide({
   const handleWordResults = (index: number) => (results: { reference: string; actual: string | null; correct: boolean }[]) => {
     // Update ref immediately for synchronous access
     latestWordResultsRef.current[index] = results;
-    
-    setWordResults((prev) => {
-      const newState = [...prev];
-      newState[index] = results;
-      return newState;
-    });
   };
 
 

@@ -155,7 +155,6 @@ export default function JournalNotesEditor({
   onClose,
 }: JournalNotesEditorProps) {
   const { notes, add, loading: notesLoading } = useLessonNotes(lessonSlug);
-  const [notesHtml, setNotesHtml] = useState("");
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [textColor, setTextColor] = useState("#222326");
   const editorRef = useRef<HTMLDivElement>(null);
@@ -179,7 +178,6 @@ export default function JournalNotesEditor({
 
     const content = currentSlideNote?.content ?? "";
     editorRef.current.innerHTML = content;
-    setNotesHtml(content);
   }, [currentSlideNote, isEditingNote, isOpen]);
 
   // Reset when editor opens/closes
@@ -190,10 +188,8 @@ export default function JournalNotesEditor({
       if (editorRef.current) {
         editorRef.current.innerHTML = content;
       }
-      setNotesHtml(content);
     } else {
       setIsEditingNote(false);
-      setNotesHtml("");
       if (editorRef.current) {
         editorRef.current.innerHTML = "";
       }
@@ -206,7 +202,6 @@ export default function JournalNotesEditor({
       setIsEditingNote(true);
     }
     const html = editorRef.current.innerHTML;
-    setNotesHtml(html);
 
     // Auto-save with debounce (1 second delay)
     if (saveTimeoutRef.current) {

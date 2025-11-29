@@ -1,6 +1,5 @@
 import { ReactNode } from "react";
-import { redirect } from "next/navigation";
-import { createServerSupabase } from "@/lib/supabaseServer";
+import { requireUser } from "@/lib/auth";
 import AppHeader from "@/components/AppHeader";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
@@ -9,14 +8,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // - no <html> / <body> tags here
   // - no globals.css import here
 
-  const supabase = await createServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth");
-  }
+  const { user } = await requireUser();
 
   return (
     <div className="min-h-screen flex flex-col">
