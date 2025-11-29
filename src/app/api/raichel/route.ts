@@ -2,10 +2,6 @@ import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { RAICHEL_SYSTEM_PROMPT } from '@/lib/raichelSystemPrompt';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 type ClientMessage = {
   role: 'user' | 'assistant';
   content: string;
@@ -19,6 +15,10 @@ export async function POST(req: Request) {
       { status: 500 },
     );
   }
+
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
 
   const body = await req.json().catch(() => null);
   const message: string | undefined = body?.message;
