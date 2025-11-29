@@ -424,65 +424,31 @@ export function OpenSourcePronunciation({ referenceText, showReferenceLabel = tr
     };
   }, []);
 
-  // Generate bars for audio visualization
-  const barCount = 5;
-  const bars = Array.from({ length: barCount }, (_, i) => {
-    // Create variation between bars for wave effect
-    const variation = Math.sin((Date.now() / 200) + (i * 0.5)) * 0.3 + 0.7;
-    const barHeight = isRecording 
-      ? Math.max(0.15, audioLevel * variation) 
-      : 0.15;
-    
-    // Change color based on audio level: green when active, gray when quiet
-    const barColor = audioLevel > 0.1 
-      ? (audioLevel > 0.5 ? '#0c9599' : '#4ade80') // Teal for strong, green for moderate
-      : '#9ca3af'; // Gray when quiet
-    
-    return (
-      <div
-        key={i}
-        className="w-1.5 rounded-full transition-all duration-100"
-        style={{ 
-          height: `${barHeight * 100}%`,
-          backgroundColor: barColor,
-          minHeight: '2px'
-        }}
-      />
-    );
-  });
-
   const button = (
     <div className="flex flex-col items-center gap-2">
       <button
         type="button"
         onClick={isRecording ? stopRecording : startRecording}
-        className="flex flex-col items-center gap-1 rounded-xl border px-4 py-2.5 text-center font-normal font-sans text-sm transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0c9599] focus-visible:ring-offset-2 sm:px-5 sm:py-3 sm:text-base"
+        className="flex flex-col items-center gap-1 rounded-xl border px-4 py-2.5 text-center font-normal font-sans text-sm transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0c9599] focus-visible:ring-offset-2 sm:px-5 sm:py-3 sm:text-base w-[100px] sm:w-[110px]"
         style={{
-          borderColor: isRecording && buttonColor ? buttonColor : '#e3e0dc',
-          backgroundColor: isRecording && buttonColor ? buttonColor : 'transparent',
-          color: isRecording && buttonColor ? '#fff' : '#222326',
+          borderColor: isRecording ? '#9bbfb2' : '#e3e0dc',
+          backgroundColor: isRecording ? '#9bbfb2' : 'transparent',
+          color: isRecording ? '#222326' : '#222326',
+          opacity: isRecording ? 1 : 0.6,
         }}
       >
         {isRecording ? (
           <>
             <StopRecordingIcon />
-            <span className="text-xs text-[#222326]">Stop</span>
+            <span className="text-xs text-[#222326] whitespace-nowrap">Stop</span>
           </>
         ) : (
           <>
             <MicrophoneIcon />
-            <span className="text-xs text-[#222326]">Record</span>
+            <span className="text-xs text-[#222326] whitespace-nowrap">Record</span>
           </>
         )}
       </button>
-      {isRecording && (
-        <div className="flex flex-col items-center gap-1">
-          <div className="flex items-end justify-center gap-1 h-8 w-20">
-            {bars}
-          </div>
-          <p className="text-xs text-gray-500">Level: {(audioLevel * 100).toFixed(0)}%</p>
-        </div>
-      )}
     </div>
   );
 

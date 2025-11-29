@@ -25,15 +25,29 @@ const playIconProps: SVGProps<SVGSVGElement> = {
   'aria-hidden': true,
 };
 
-const ReplayIcon = ({ className = 'h-4 w-4' }: { className?: string }) => (
+const AudioIcon = ({ className = 'h-4 w-4' }: { className?: string }) => (
   <svg {...playIconProps} className={className}>
-    <path d="M7 5l12 7-12 7V5z" />
+    <path d="M11 5L6 9H2v6h4l5 4V5z" />
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
   </svg>
 );
 
 const PlayIcon = ({ className = 'h-4 w-4' }: { className?: string }) => (
   <svg {...playIconProps} className={className}>
     <path d="M7 5l12 7-12 7V5z" />
+  </svg>
+);
+
+const PauseIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
+  <svg {...playIconProps} className={className}>
+    <rect x="6" y="4" width="4" height="16" />
+    <rect x="14" y="4" width="4" height="16" />
+  </svg>
+);
+
+const ResumeIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
+  <svg {...playIconProps} className={className}>
+    <polygon points="5 3 19 12 5 21 5 3" />
   </svg>
 );
 
@@ -58,13 +72,22 @@ export default function SpeechMatchSlide({
   const [error, setError] = useState<string | null>(null);
   const [completedIndices, setCompletedIndices] = useState<Set<number>>(new Set());
   const [hasStarted, setHasStarted] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   const audioCache = useRef<Map<number, SpeechAsset>>(new Map());
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const availableIndicesRef = useRef<number[]>([]);
+  // Track pause state to restore on resume
+  const pauseStateRef = useRef<{
+    targetIndex: number | null;
+    wasPlaying: boolean;
+  } | null>(null);
 
   const playElement = useCallback(
     async (index: number) => {
+      // Don't play if paused
+      if (isPaused) return;
+
       const element = elements[index];
       if (!element) return;
 
@@ -82,7 +105,7 @@ export default function SpeechMatchSlide({
         // Get or create audio asset
         let asset = audioCache.current.get(index);
         if (!asset) {
-          asset = await fetchSpeechAsset(element.speech, defaultLang);
+          asset = await fetchSpeechAsset(element.speech, { fallbackLang: defaultLang });
           audioCache.current.set(index, asset);
         }
 
@@ -115,10 +138,13 @@ export default function SpeechMatchSlide({
         }
       }
     },
-    [elements, defaultLang],
+    [elements, defaultLang, isPaused],
   );
 
   const selectRandomElement = useCallback(() => {
+    // Don't select if paused
+    if (isPaused) return;
+
     const allIndices = elements.map((_, index) => index);
     const available = allIndices.filter(
       (index) => !completedIndices.has(index)
@@ -135,7 +161,7 @@ export default function SpeechMatchSlide({
     setWrongIndex(null);
     setMessage(null);
     playElement(randomIndex);
-  }, [completedIndices, elements, playElement]);
+  }, [completedIndices, elements, playElement, isPaused]);
 
   // Initialize available indices when completed indices change
   useEffect(() => {
@@ -144,11 +170,11 @@ export default function SpeechMatchSlide({
       (index) => !completedIndices.has(index)
     );
     
-    // Only auto-select next element if activity has started and we need a new target
-    if (hasStarted && availableIndicesRef.current.length > 0 && currentTargetIndex === null && !isPlaying) {
+    // Only auto-select next element if activity has started, not paused, and we need a new target
+    if (hasStarted && !isPaused && availableIndicesRef.current.length > 0 && currentTargetIndex === null && !isPlaying) {
       selectRandomElement();
     }
-  }, [elements, completedIndices, currentTargetIndex, isPlaying, selectRandomElement, hasStarted]);
+  }, [elements, completedIndices, currentTargetIndex, isPlaying, selectRandomElement, hasStarted, isPaused]);
 
   const handleStart = useCallback(() => {
     if (!hasStarted) {
@@ -161,6 +187,9 @@ export default function SpeechMatchSlide({
     (index: number) => {
       // Don't allow clicks if activity hasn't started
       if (!hasStarted) return;
+      
+      // Don't allow clicks if paused
+      if (isPaused) return;
       
       // Don't allow clicks while audio is playing
       if (isPlaying) return;
@@ -199,7 +228,7 @@ export default function SpeechMatchSlide({
         }, 2000);
       }
     },
-    [isPlaying, currentTargetIndex, completedIndices, playElement, selectRandomElement, hasStarted],
+    [isPlaying, currentTargetIndex, completedIndices, playElement, selectRandomElement, hasStarted, isPaused],
   );
 
   const handleElementKeyDown = useCallback(
@@ -213,10 +242,54 @@ export default function SpeechMatchSlide({
   );
 
   const handleReplay = useCallback(() => {
-    if (currentTargetIndex !== null && !isPlaying) {
+    if (currentTargetIndex !== null && !isPlaying && !isPaused) {
       playElement(currentTargetIndex);
     }
-  }, [currentTargetIndex, isPlaying, playElement]);
+  }, [currentTargetIndex, isPlaying, playElement, isPaused]);
+
+  const handlePauseToggle = useCallback(async () => {
+    if (isPaused) {
+      // Resuming - restore state and continue from where we left off
+      setIsPaused(false);
+      
+      const savedState = pauseStateRef.current;
+      if (savedState) {
+        if (savedState.targetIndex !== null) {
+          // Restore the target index
+          setCurrentTargetIndex(savedState.targetIndex);
+          
+          // If audio was playing, replay it
+          if (savedState.wasPlaying) {
+            await playElement(savedState.targetIndex);
+          }
+        } else if (hasStarted && currentTargetIndex === null) {
+          // No target was set, select a new one
+          selectRandomElement();
+        }
+      }
+      
+      // Clear saved state
+      pauseStateRef.current = null;
+    } else {
+      // Pausing - save current state
+      const wasPlaying = isPlaying;
+      
+      pauseStateRef.current = {
+        targetIndex: currentTargetIndex,
+        wasPlaying: wasPlaying || false,
+      };
+      
+      setIsPaused(true);
+      
+      // Stop any currently playing audio
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current.removeAttribute('src');
+        currentAudioRef.current = null;
+        setIsPlaying(false);
+      }
+    }
+  }, [isPaused, isPlaying, currentTargetIndex, hasStarted, playElement, selectRandomElement]);
 
   const getElementStyles = useCallback(
     (index: number) => {
@@ -293,7 +366,7 @@ export default function SpeechMatchSlide({
                         ? 'cursor-pointer hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0c9599] focus-visible:ring-offset-2'
                         : isCompleted
                         ? 'cursor-default'
-                        : 'cursor-not-allowed opacity-50'
+                        : 'cursor-not-allowed'
                     } ${getElementStyles(index)}`}
                     role={isClickable ? 'button' : undefined}
                     tabIndex={isClickable ? 0 : -1}
@@ -312,28 +385,50 @@ export default function SpeechMatchSlide({
           </div>
         </div>
         <div className="flex justify-center pb-4 gap-4">
-          {!hasStarted ? (
-            <button
-              type="button"
-              onClick={handleStart}
-              className="flex flex-col items-center gap-1 rounded-xl border border-[#e3e0dc] bg-transparent px-4 py-2.5 text-center font-normal font-sans text-sm text-[#222326] transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0c9599] focus-visible:ring-offset-2 sm:px-5 sm:py-3 sm:text-base"
-            >
-              <PlayIcon />
-              <span className="text-xs text-[#222326]">Play</span>
-            </button>
-          ) : (
-            currentTargetIndex !== null && (
+          <div className="w-[100px] sm:w-[110px]">
+            {!hasStarted ? (
+              <button
+                type="button"
+                onClick={handleStart}
+                className="flex flex-col items-center gap-1 rounded-xl border border-[#e3e0dc] bg-transparent px-4 py-2.5 text-center font-normal font-sans text-sm text-[#222326] transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0c9599] focus-visible:ring-offset-2 sm:px-5 sm:py-3 sm:text-base w-full"
+                style={{ opacity: 0.6 }}
+              >
+                <PlayIcon />
+                <span className="text-xs text-[#222326] whitespace-nowrap">Play</span>
+              </button>
+            ) : (
               <button
                 type="button"
                 onClick={handleReplay}
-                disabled={isPlaying}
-                className="flex flex-col items-center gap-1 rounded-xl border border-[#e3e0dc] bg-transparent px-4 py-2.5 text-center font-normal font-sans text-sm text-[#222326] transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0c9599] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 sm:px-5 sm:py-3 sm:text-base"
+                disabled={currentTargetIndex === null || isPlaying || isPaused}
+                className="flex flex-col items-center gap-1 rounded-xl border border-[#e3e0dc] bg-transparent px-4 py-2.5 text-center font-normal font-sans text-sm text-[#222326] transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0c9599] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 sm:px-5 sm:py-3 sm:text-base w-full"
+                style={{ opacity: isPlaying ? 1 : 0.6 }}
               >
-                <ReplayIcon />
-                <span className="text-xs text-[#222326]">Replay</span>
+                <AudioIcon />
+                <span className="text-xs text-[#222326] whitespace-nowrap">Replay</span>
               </button>
-            )
-          )}
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handlePauseToggle}
+            disabled={!hasStarted}
+            className="flex flex-col items-center gap-1 rounded-xl border border-[#e3e0dc] bg-transparent px-4 py-2.5 text-center font-normal font-sans text-sm text-[#222326] transition-transform duration-200 hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0c9599] focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 sm:px-5 sm:py-3 sm:text-base w-[100px] sm:w-[110px]"
+            style={{ opacity: 0.6 }}
+            aria-label={isPaused ? 'Resume activity' : 'Pause activity'}
+          >
+            {isPaused ? (
+              <>
+                <ResumeIcon />
+                <span className="text-xs text-[#222326] whitespace-nowrap">Reprendre</span>
+              </>
+            ) : (
+              <>
+                <PauseIcon />
+                <span className="text-xs text-[#222326] whitespace-nowrap">Pause</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>

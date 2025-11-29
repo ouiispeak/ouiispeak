@@ -35,11 +35,78 @@ function normalizeText(text: string) {
     .trim();
 }
 
+// Map of single letters to common Whisper transcriptions
+const LETTER_TRANSCRIPTIONS: Record<string, string[]> = {
+  'a': ['a', 'ay', 'eh'],
+  'b': ['b', 'be', 'bee'],
+  'c': ['c', 'see', 'sea'],
+  'd': ['d', 'dee'],
+  'e': ['e', 'ee', 'eh'],
+  'f': ['f', 'ef', 'eff'],
+  'g': ['g', 'gee', 'jee'],
+  'h': ['h', 'aitch', 'haitch'],
+  'i': ['i', 'eye', 'ay'],
+  'j': ['j', 'jay', 'jai'],
+  'k': ['k', 'kay', 'kei'],
+  'l': ['l', 'el', 'ell'],
+  'm': ['m', 'em'],
+  'n': ['n', 'en'],
+  'o': ['o', 'oh', 'owe'],
+  'p': ['p', 'pee', 'pea'],
+  'q': ['q', 'cue', 'queue', 'kyu'],
+  'r': ['r', 'ar', 'are'],
+  's': ['s', 'es', 'ess'],
+  't': ['t', 'tee', 'tea'],
+  'u': ['u', 'you', 'yew'],
+  'v': ['v', 'vee'],
+  'w': ['w', 'double u', 'double-u', 'doubleyou'],
+  'x': ['x', 'ex', 'eks'],
+  'y': ['y', 'why', 'wye', 'wy'],
+  'z': ['z', 'zed', 'zee'],
+};
+
+function matchesLetter(letter: string, transcript: string): boolean {
+  const normalizedLetter = letter.toLowerCase().trim();
+  const normalizedTranscript = normalizeText(transcript);
+  
+  // If it's a single letter, check against common transcriptions
+  if (normalizedLetter.length === 1 && LETTER_TRANSCRIPTIONS[normalizedLetter]) {
+    const possibleTranscriptions = LETTER_TRANSCRIPTIONS[normalizedLetter];
+    const transcriptWords = normalizedTranscript.split(/\s+/);
+    
+    // Check if any word in the transcript matches any possible transcription
+    return transcriptWords.some(word => 
+      possibleTranscriptions.some(trans => word === trans || word.startsWith(trans))
+    );
+  }
+  
+  // For non-single letters, use exact match
+  return normalizedTranscript === normalizedLetter;
+}
+
 function simpleWordScore(reference: string, actual: string) {
-  const refWords = normalizeText(reference).split(' ');
-  const actWords = normalizeText(actual).split(' ');
+  const refWords = normalizeText(reference).split(' ').filter(w => w.length > 0);
+  const actWords = normalizeText(actual).split(' ').filter(w => w.length > 0);
   let correct = 0;
 
+  // Special handling for single-letter references
+  if (refWords.length === 1 && refWords[0].length === 1) {
+    // Single letter - use flexible matching
+    const letter = refWords[0];
+    const matches = matchesLetter(letter, actual);
+    correct = matches ? 1 : 0;
+    
+    return {
+      accuracy: correct * 100,
+      wordResults: [{
+        reference: reference,
+        actual: actual,
+        correct: matches,
+      }],
+    };
+  }
+
+  // Standard word-by-word comparison for multi-word or multi-character references
   for (let i = 0; i < refWords.length; i++) {
     if (actWords[i] && actWords[i] === refWords[i]) {
       correct++;

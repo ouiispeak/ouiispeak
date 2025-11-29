@@ -1,21 +1,28 @@
 import type { Slide } from '@/lessons/types';
 import { lessonSlug as slideCreatorSlug, slides as slideCreatorSlides } from '@/lessons/slide-templates/slide-creator-model';
-import { lessonSlug as a0m1Lesson1Slug, slides as a0m1Lesson1Slides } from '@/lessons/A0/A0Module1Lesson1';
-import { lessonSlug as a0m1Lesson2Slug, slides as a0m1Lesson2Slides } from '@/lessons/A0/A0Module1Lesson2';
-import { lessonSlug as a0m1Lesson3Slug, slides as a0m1Lesson3Slides } from '@/lessons/A0/A0Module1Lesson3';
-import { lessonSlug as a0m1Lesson4Slug, slides as a0m1Lesson4Slides } from '@/lessons/A0/A0Module1Lesson4';
-import { lessonSlug as a0m1Lesson5Slug, slides as a0m1Lesson5Slides } from '@/lessons/A0/A0Module1Lesson5';
-import { lessonSlug as a0m1Lesson6Slug, slides as a0m1Lesson6Slides } from '@/lessons/A0/A0Module1Lesson6';
-import { lessonSlug as a0m1Lesson7Slug, slides as a0m1Lesson7Slides } from '@/lessons/A0/A0Module1Lesson7';
-import { lessonSlug as a0m1Lesson8Slug, slides as a0m1Lesson8Slides } from '@/lessons/A0/A0Module1Lesson8';
-import { lessonSlug as a0m1Lesson9Slug, slides as a0m1Lesson9Slides } from '@/lessons/A0/A0Module1Lesson9';
-import { lessonSlug as a0m1Lesson10Slug, slides as a0m1Lesson10Slides } from '@/lessons/A0/A0Module1Lesson10';
-import { lessonSlug as a1m1Lesson1Slug, slides as a1m1Lesson1Slides } from '@/lessons/A1/A1Module1Lesson1';
-import { lessonSlug as a2m1Lesson1Slug, slides as a2m1Lesson1Slides } from '@/lessons/A2/A2Module1Lesson1';
-import { lessonSlug as b1m1Lesson1Slug, slides as b1m1Lesson1Slides } from '@/lessons/B1/B1Module1Lesson1';
-import { lessonSlug as b2m1Lesson1Slug, slides as b2m1Lesson1Slides } from '@/lessons/B2/B2Module1Lesson1';
-import { lessonSlug as c1m1Lesson1Slug, slides as c1m1Lesson1Slides } from '@/lessons/C1/C1Module1Lesson1';
-import { lessonSlug as c2m1Lesson1Slug, slides as c2m1Lesson1Slides } from '@/lessons/C2/C2Module1Lesson1';
+import { lessonSlug as a0m1Lesson1Slug, slides as a0m1Lesson1Slides } from '@/lessons/A0/module1/A0Module1Lesson1';
+import { lessonSlug as a0m1Lesson2Slug, slides as a0m1Lesson2Slides } from '@/lessons/A0/module1/A0Module1Lesson2';
+import { lessonSlug as a0m1Lesson3Slug, slides as a0m1Lesson3Slides } from '@/lessons/A0/module1/A0Module1Lesson3';
+import { lessonSlug as a0m1Lesson4Slug, slides as a0m1Lesson4Slides } from '@/lessons/A0/module1/A0Module1Lesson4';
+import { lessonSlug as a0m1Lesson5Slug, slides as a0m1Lesson5Slides } from '@/lessons/A0/module1/A0Module1Lesson5';
+import { lessonSlug as a0m1Lesson6Slug, slides as a0m1Lesson6Slides } from '@/lessons/A0/module1/A0Module1Lesson6';
+import { lessonSlug as a0m1Lesson7Slug, slides as a0m1Lesson7Slides } from '@/lessons/A0/module1/A0Module1Lesson7';
+import { lessonSlug as a0m1Lesson8Slug, slides as a0m1Lesson8Slides } from '@/lessons/A0/module1/A0Module1Lesson8';
+import { lessonSlug as a0m1Lesson9Slug, slides as a0m1Lesson9Slides } from '@/lessons/A0/module1/A0Module1Lesson9';
+import { lessonSlug as a0m1Lesson10Slug, slides as a0m1Lesson10Slides } from '@/lessons/A0/module1/A0Module1Lesson10';
+import { lessonSlug as a1m1Lesson1Slug, slides as a1m1Lesson1Slides } from '@/lessons/A1/module1/A1Module1Lesson1';
+import { lessonSlug as a2m1Lesson1Slug, slides as a2m1Lesson1Slides } from '@/lessons/A2/module1/A2Module1Lesson1';
+import { lessonSlug as b1m1Lesson1Slug, slides as b1m1Lesson1Slides } from '@/lessons/B1/module1/B1Module1Lesson1';
+import { lessonSlug as b2m1Lesson1Slug, slides as b2m1Lesson1Slides } from '@/lessons/B2/module1/B2Module1Lesson1';
+import { lessonSlug as c1m1Lesson1Slug, slides as c1m1Lesson1Slides } from '@/lessons/C1/module1/C1Module1Lesson1';
+import { lessonSlug as c2m1Lesson1Slug, slides as c2m1Lesson1Slides } from '@/lessons/C2/module1/C2Module1Lesson1';
+import { lessonSlug as a0m2Lesson1Slug, slides as a0m2Lesson1Slides } from '@/lessons/A0/module2/A0Module2Lesson1';
+import { lessonSlug as a1m2Lesson1Slug, slides as a1m2Lesson1Slides } from '@/lessons/A1/module2/A1Module2Lesson1';
+import { lessonSlug as a2m2Lesson1Slug, slides as a2m2Lesson1Slides } from '@/lessons/A2/module2/A2Module2Lesson1';
+import { lessonSlug as b1m2Lesson1Slug, slides as b1m2Lesson1Slides } from '@/lessons/B1/module2/B1Module2Lesson1';
+import { lessonSlug as b2m2Lesson1Slug, slides as b2m2Lesson1Slides } from '@/lessons/B2/module2/B2Module2Lesson1';
+import { lessonSlug as c1m2Lesson1Slug, slides as c1m2Lesson1Slides } from '@/lessons/C1/module2/C1Module2Lesson1';
+import { lessonSlug as c2m2Lesson1Slug, slides as c2m2Lesson1Slides } from '@/lessons/C2/module2/C2Module2Lesson1';
 import {
   lessonSlug as slideTemplateRefSlug,
   slides as slideTemplateRefSlides,
@@ -40,6 +47,13 @@ const registrations: Array<[string, Slide[]]> = [
   [b2m1Lesson1Slug, b2m1Lesson1Slides],
   [c1m1Lesson1Slug, c1m1Lesson1Slides],
   [c2m1Lesson1Slug, c2m1Lesson1Slides],
+  [a0m2Lesson1Slug, a0m2Lesson1Slides],
+  [a1m2Lesson1Slug, a1m2Lesson1Slides],
+  [a2m2Lesson1Slug, a2m2Lesson1Slides],
+  [b1m2Lesson1Slug, b1m2Lesson1Slides],
+  [b2m2Lesson1Slug, b2m2Lesson1Slides],
+  [c1m2Lesson1Slug, c1m2Lesson1Slides],
+  [c2m2Lesson1Slug, c2m2Lesson1Slides],
 ];
 
 const lessonsBySlug: Record<string, Slide[]> = registrations.reduce<Record<string, Slide[]>>(

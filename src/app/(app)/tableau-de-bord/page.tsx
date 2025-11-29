@@ -7,6 +7,7 @@ import {
   type UserLessonRow,
   type LessonRow,
 } from '@/lib/lessonQueries';
+import { registeredLessonSlugs } from '@/lessons/registry';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,8 +31,13 @@ export default async function TableauDeBordPage() {
   // Load module + lessons
   const { module, lessons } = await fetchModuleAndLessons(supabase, 'module-1');
 
+  // Filter to only show lessons that exist in the registry (have actual lesson files)
+  const validLessons = lessons.filter((lesson) => 
+    registeredLessonSlugs.includes(lesson.slug)
+  );
+
   // Load this user's progress rows for those lessons
-  const lessonIds = lessons.map((l) => l.id);
+  const lessonIds = validLessons.map((l) => l.id);
   const progressRows = await fetchUserLessonProgress(supabase, user.id, lessonIds);
 
   // Index progress by lesson_id for quick lookup
@@ -43,7 +49,7 @@ export default async function TableauDeBordPage() {
   const view: ViewItem[] = [];
   let previousCompleted = true; // first lesson is unlocked
 
-  for (const l of lessons) {
+  for (const l of validLessons) {
     const prog = progressByLessonId[l.id];
     const requiredScore = l.required_score ?? 0;
     const userScore = prog?.score ?? 0;
@@ -60,27 +66,7 @@ export default async function TableauDeBordPage() {
     <main>
       <div>
         <h1>Tableau de bord</h1>
-        <p>Module : {module.title}</p>
-        <ol>
-          {view.map((v, idx) => {
-            const requiredScore = v.lesson.required_score ?? 0;
-            return (
-              <li key={v.lesson.id}>
-                <div>
-                  {idx + 1}. {v.lesson.title}
-                </div>
-                <div>
-                  <div>État : <span>{v.state}</span></div>
-                  <div>{v.unlocked ? '🔓 Déverrouillé' : '🔒 Verrouillé'}</div>
-                  <div>Score requis : <span>{requiredScore}</span></div>
-                  {typeof v.progress?.score === 'number' && (
-                    <div>Score actuel : <span>{v.progress.score}</span></div>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ol>
+        {/* Content temporarily hidden */}
       </div>
     </main>
   );
