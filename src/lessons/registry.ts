@@ -29,7 +29,9 @@ import {
 } from '@/lessons/slide template ref/slide template ref lesson 1';
 
 const registrations: Array<[string, Slide[]]> = [
+  // NOTE: slide-creator-model is a developer template/example lesson, not a user-facing lesson.
   [slideCreatorSlug, slideCreatorSlides],
+  // NOTE: slide-template-ref lessons are developer reference examples, not user-facing lessons.
   [slideTemplateRefSlug, slideTemplateRefSlides],
   [a0m1Lesson1Slug, a0m1Lesson1Slides],
   [a0m1Lesson2Slug, a0m1Lesson2Slides],

@@ -14,16 +14,12 @@ export type LessonInfo = {
  * @returns Humanized display name (e.g., "A0 Module 1 · Lesson 1")
  */
 export function humanizeLessonSlug(slug: string): string {
-  // @ts-ignore - TypeScript language server issue with String.includes
   if (slug.includes('slide-templates')) {
     return 'Prototype de diapositive';
   }
 
-  // @ts-ignore - TypeScript language server issue with String.split
   const segments = slug.split('/');
-  // @ts-ignore - TypeScript language server issue with Array.map and String methods
   const spaced = segments.map((segment: string) => segment.replace(/-/g, ' '));
-  // @ts-ignore - TypeScript language server issue with Array.map and String methods
   const capitalized = spaced.map((segment: string) => segment.charAt(0).toUpperCase() + segment.slice(1));
   return capitalized.join(' · ');
 }
@@ -34,10 +30,8 @@ export function humanizeLessonSlug(slug: string): string {
  * @returns LessonInfo object with parsed components, or null if the slug format is invalid
  */
 export function parseLessonSlug(slug: string): LessonInfo | null {
-  // @ts-ignore - TypeScript language server issue with String.includes
   if (slug.includes('slide-templates')) return null;
 
-  // @ts-ignore - TypeScript language server issue with String.split
   const parts = slug.split('/');
   if (parts.length < 2) return null;
 

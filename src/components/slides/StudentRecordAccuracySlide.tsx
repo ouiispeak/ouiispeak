@@ -1,5 +1,8 @@
 'use client';
 
+// Developer-only slide used in the slide-creator-model template lesson.
+// Not used in production lessons.
+
 import { useState } from 'react';
 import { OpenSourcePronunciation } from '@/components/lesson/OpenSourcePronunciation';
 import type { StudentRecordAccuracySlideProps } from '@/lessons/types';

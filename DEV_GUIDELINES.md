@@ -129,6 +129,14 @@ If we don't do this cleanup, spaghetti sneaks back in.
 
 ---
 
+## 8. TypeScript
+
+The TypeScript compiler (`npx tsc --noEmit` or `npm run check:types`) is the source of truth for type errors.
+
+If your IDE shows red squiggles for standard methods (`map`, `includes`, `startsWith`, etc.) but `check:types` passes, try restarting the TS server (VS Code: Cmd+Shift+P → "TypeScript: Restart TS Server").
+
+---
+
 ## TL;DR
 
 - One job per file.

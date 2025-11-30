@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabaseServer';
+import { parseLessonSlug } from '@/lib/lessonSlug';
 
 export async function POST(req: Request) {
   try {
@@ -7,10 +8,16 @@ export async function POST(req: Request) {
     if (!lesson_slug || typeof lesson_slug !== 'string') {
       return NextResponse.json({ error: 'lesson_slug manquant' }, { status: 400 });
     }
-    const [moduleSlug, lessonSlug] = lesson_slug.split('/');
-    if (!moduleSlug || !lessonSlug) {
+
+    const lessonInfo = parseLessonSlug(lesson_slug);
+    if (!lessonInfo) {
       return NextResponse.json({ error: 'Format lesson_slug invalide' }, { status: 400 });
     }
+
+    // Derive moduleSlug and lessonSlug for DB queries
+    // lessonInfo.slug is "a0-module-1/lesson-1", so split to get moduleSlug
+    const [moduleSlug] = lessonInfo.slug.split('/');
+    const lessonSlug = lessonInfo.lesson;
 
     // If Supabase env/config is missing, quietly succeed so the client UI keeps working.
     try {

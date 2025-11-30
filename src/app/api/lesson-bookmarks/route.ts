@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabase } from '@/lib/supabaseServer';
+import { requireApiUser } from '@/lib/api/auth';
 
 export async function GET(req: NextRequest) {
-  const supabase = await createServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const auth = await requireApiUser();
+  if (!auth.authorized) {
+    return auth.response;
+  }
+  const { supabase, user } = auth;
 
   const { searchParams } = new URL(req.url);
   const lesson_slug = searchParams.get('lesson_slug') ?? undefined;
@@ -23,9 +25,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const supabase = await createServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const auth = await requireApiUser();
+  if (!auth.authorized) {
+    return auth.response;
+  }
+  const { supabase, user } = auth;
 
   const body = await req.json().catch(() => null);
   const { lesson_slug, slide_id } = body || {};
@@ -47,9 +51,11 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const supabase = await createServerSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const auth = await requireApiUser();
+  if (!auth.authorized) {
+    return auth.response;
+  }
+  const { supabase, user } = auth;
 
   const body = await req.json().catch(() => null);
   const { lesson_slug, slide_id } = body || {};
