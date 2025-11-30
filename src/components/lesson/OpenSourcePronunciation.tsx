@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, type SVGProps } from 'react';
-import { getUserMediaStream, getUserMediaError } from '@/lib/audio/getUserMediaStream';
+import { useState, useRef, useEffect, useCallback, useMemo, type SVGProps } from 'react';
+import { getUserMediaError } from '@/lib/audio/getUserMediaStream';
 import { setupAudioVisualization } from '@/lib/audio/setupAudioVisualization';
 import { submitPronunciationAssessment } from '@/lib/audio/submitPronunciationAssessment';
 import { useAudioLevel } from '@/hooks/audio/useAudioLevel';
 import { useSilenceDetection } from '@/hooks/audio/useSilenceDetection';
+import { useMediaRecorder } from '@/hooks/audio/useMediaRecorder';
 
 type Props = {
   referenceText: string;
@@ -45,7 +46,6 @@ const StopRecordingIcon = ({ className = 'h-4 w-4' }: { className?: string }) =>
 );
 
 export function OpenSourcePronunciation({ referenceText, showReferenceLabel = true, buttonOnly = false, onWordResults, hideWordChips = false, autoStart = false, onRecordingComplete, buttonColor }: Props) {
-  const [isRecording, setIsRecording] = useState(false);
   const [score, setScore] = useState<number | null>(null);
   const [transcript, setTranscript] = useState<string | null>(null);
   const [words, setWords] = useState<
@@ -53,215 +53,115 @@ export function OpenSourcePronunciation({ referenceText, showReferenceLabel = tr
   >([]);
   const [error, setError] = useState<string | null>(null);
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const pendingStopRef = useRef(false);
+  // Audio visualization refs (managed by component, set by onStreamReady callback)
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Use hook for audio level monitoring
-  const audioLevel = useAudioLevel(analyserRef.current, isRecording);
-
-  async function startRecording() {
-    if (typeof window === 'undefined') return;
-
-    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-      setError('L’enregistrement audio n’est pas pris en charge dans ce navigateur.');
-      return;
-    }
-
-    setError(null);
-    setScore(null);
-    setTranscript(null);
-    setWords([]);
-    // Reset pendingStop at the start of recording to ensure clean state
-    pendingStopRef.current = false;
-    console.log('[START-RECORDING] Reset pendingStop to false');
-    // Silence detection is handled by useSilenceDetection hook
-
-    let stream: MediaStream;
+  // Callbacks for MediaRecorder hook
+  const handleStop = useCallback(async (blob: Blob) => {
     try {
-      stream = await getUserMediaStream();
-      streamRef.current = stream;
+      const data = await submitPronunciationAssessment(blob, referenceText);
+      setTranscript(data.transcript);
+      setScore(data.score);
+      setWords(data.words);
+      onWordResults?.(data.words);
+      onRecordingComplete?.();
     } catch (err: unknown) {
-      const message = err instanceof Error && err.message.includes('n\'est pas pris en charge')
-        ? err.message
-        : getUserMediaError(err);
-      setError(message);
-      return;
+      console.error('Fetch error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(`Impossible de contacter le serveur de prononciation: ${errorMessage}`);
     }
+  }, [referenceText, onWordResults, onRecordingComplete]);
 
-    const mr = new MediaRecorder(stream);
-    chunksRef.current = [];
-    mediaRecorderRef.current = mr;
-
-    // Set up audio visualization BEFORE starting MediaRecorder
+  // Audio visualization setup - sets analyserRef and audioContextRef for hooks
+  const handleStreamReady = useCallback(async (stream: MediaStream) => {
     try {
       const { audioContext, analyser } = await setupAudioVisualization(stream);
       audioContextRef.current = audioContext;
       analyserRef.current = analyser;
+      // Audio level monitoring will start automatically via useAudioLevel hook
     } catch (err) {
       console.error('Audio visualization error:', err);
     }
+  }, []);
 
-    mr.ondataavailable = (e) => {
-      if (e.data.size > 0) {
-        console.log('Audio chunk received:', e.data.size, 'bytes');
-        chunksRef.current.push(e.data);
-      }
-    };
+  // Error handling callback
+  const handleError = useCallback((err: Error) => {
+    const message = err instanceof Error && err.message.includes('n\'est pas pris en charge')
+      ? err.message
+      : getUserMediaError(err);
+    setError(message);
+  }, []);
 
-    // Audio level monitoring is now handled by useAudioLevel hook
-    // Silence detection will be extracted in Step 2.2
+  // Options object for MediaRecorder hook (memoized to prevent unnecessary re-renders)
+  const recorderOptions = useMemo(() => ({
+    onStop: handleStop,
+    onStreamReady: handleStreamReady,
+    onError: handleError,
+  }), [handleStop, handleStreamReady, handleError]);
 
-    mr.onstop = async () => {
-      const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+  // Use MediaRecorder hook
+  const {
+    isRecording,
+    startRecording: hookStartRecording,
+    stopRecording: hookStopRecording,
+    error: recorderError,
+    mediaRecorderRef,
+  } = useMediaRecorder(recorderOptions);
 
-      try {
-        const data = await submitPronunciationAssessment(blob, referenceText);
-        setTranscript(data.transcript);
-        setScore(data.score);
-        setWords(data.words);
-        onWordResults?.(data.words);
-        onRecordingComplete?.();
-      } catch (err: unknown) {
-        console.error('Fetch error:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        setError(`Impossible de contacter le serveur de prononciation: ${errorMessage}`);
-      } finally {
-        // Reset pendingStop after stop handler completes
-        pendingStopRef.current = false;
-        chunksRef.current = [];
-        mr.stream.getTracks().forEach((track) => {
-          try {
-            track.stop();
-          } catch {
-            // ignore cleanup errors
-          }
-        });
-        mr.ondataavailable = null;
-        mr.onstop = null;
-        if (mediaRecorderRef.current === mr) {
-          mediaRecorderRef.current = null;
-        }
-      }
-    };
+  // Merge recorder error with component error
+  useEffect(() => {
+    if (recorderError) {
+      setError(recorderError);
+    }
+  }, [recorderError]);
 
-    // Store references locally for the closure
-    const currentRecorder = mr;
-    const currentAnalyser = analyserRef.current;
-    
-    mr.start();
-    console.log('MediaRecorder start() called, initial state:', mr.state);
-    setIsRecording(true);
-    
-    // Audio level monitoring is now handled automatically by useAudioLevel hook
-  }
+  // Start recording wrapper - resets component state before starting
+  const startRecording = useCallback(async () => {
+    setError(null);
+    setScore(null);
+    setTranscript(null);
+    setWords([]);
+    await hookStartRecording();
+  }, [hookStartRecording]);
 
+  // Stop recording wrapper - cleans up audio visualization
   const stopRecording = useCallback(() => {
-    const recorder = mediaRecorderRef.current;
-    if (!recorder || recorder.state === 'inactive') {
-      console.log('[STOP-RECORDING] No active recorder, ignoring');
-      // Reset pendingStop if recorder is already inactive
-      pendingStopRef.current = false;
-      return;
-    }
-
-    // Guard against double-stops - but only if recorder is already stopping
-    // If recorder is still recording, we need to stop it even if pendingStop is true
-    if (pendingStopRef.current && recorder.state !== 'recording') {
-      console.log('[STOP-RECORDING] Already stopping (pendingStop is true and recorder not recording), ignoring duplicate call');
-      return;
-    }
-
-    console.log('[STOP-RECORDING] Called, setting pendingStop to true');
-    pendingStopRef.current = true;
-    // Silence detection cleanup is handled by useSilenceDetection hook
-    if (silenceTimeoutRef.current) {
-      clearTimeout(silenceTimeoutRef.current);
-      silenceTimeoutRef.current = null;
-    }
-    console.log('[STOP-RECORDING] Stopping MediaRecorder, state:', recorder.state);
-    recorder.stop();
-    setIsRecording(false);
+    hookStopRecording();
     
-    // Audio level monitoring cleanup is handled by useAudioLevel hook
-    
-    // Clean up audio context
+    // Clean up audio context (managed by component)
     if (audioContextRef.current) {
       audioContextRef.current.close().catch(() => {});
       audioContextRef.current = null;
     }
     analyserRef.current = null;
-    
-    // Stream tracks will be stopped in the MediaRecorder onstop handler
-  }, []); // No dependencies - uses refs and state setters which are stable
+  }, [hookStopRecording]);
 
-  // Silence detection hook - monitors analyser directly and auto-stops when silence detected
-  // Reads analyser directly (not gated by rAF) to avoid stale values when tab is backgrounded
-  // Note: We check recorder state directly, not pendingStopRef, because refs can be stale
+  // Silence detection - auto-stops recording when silence is detected
   const handleSilenceDetected = useCallback(() => {
-    // Check recorder state directly - this is the source of truth
-    // Don't check pendingStopRef here - stopRecording() has its own guard against double-stops
     const recorder = mediaRecorderRef.current;
     if (recorder && recorder.state === 'recording') {
-      console.log('[AUTO-STOP] handleSilenceDetected: calling stopRecording()');
-      stopRecording(); // stopRecording() will check pendingStopRef internally and prevent double-stops
-    } else {
-      console.log('[AUTO-STOP] handleSilenceDetected: skipping - recorder not in recording state', {
-        hasRecorder: !!recorder,
-        recorderState: recorder?.state
-      });
+      stopRecording();
     }
   }, [stopRecording]);
 
-  useSilenceDetection(
-    analyserRef.current, // Pass analyser directly so hook can read it independently of rAF
-    isRecording, // Only gate with isRecording - callback will check pendingStopRef
-    handleSilenceDetected
-  );
+  useSilenceDetection(analyserRef.current, isRecording, handleSilenceDetected);
 
   // Auto-start recording when autoStart prop is true
   useEffect(() => {
-    console.log('Auto-start effect triggered:', { autoStart, isRecording, pendingStop: pendingStopRef.current, hasRecorder: mediaRecorderRef.current !== null });
-    if (autoStart && !isRecording && !pendingStopRef.current && mediaRecorderRef.current === null) {
-      // Start recording immediately when autoStart becomes true
-      console.log('Auto-starting recording...');
+    if (autoStart && !isRecording && mediaRecorderRef.current === null) {
       startRecording();
     }
-  }, [autoStart]);
+  }, [autoStart, isRecording, startRecording]);
 
+  // Cleanup audio visualization on unmount (MediaRecorder cleanup handled by hook)
   useEffect(() => {
     return () => {
-      pendingStopRef.current = true;
-      if (silenceTimeoutRef.current) {
-        clearTimeout(silenceTimeoutRef.current);
-        silenceTimeoutRef.current = null;
-      }
-      const recorder = mediaRecorderRef.current;
-      if (recorder) {
-        try {
-          if (recorder.state !== 'inactive') {
-            recorder.stop();
-          }
-        } catch {
-          // ignore stop errors during cleanup
-        }
-        recorder.ondataavailable = null;
-        recorder.onstop = null;
-      }
-      mediaRecorderRef.current = null;
-
-      // Clean up audio visualization
-      // Animation frame cleanup is handled by useAudioLevel hook
       if (audioContextRef.current) {
         audioContextRef.current.close().catch(() => {});
         audioContextRef.current = null;
       }
       analyserRef.current = null;
-      streamRef.current = null;
     };
   }, []);
 
