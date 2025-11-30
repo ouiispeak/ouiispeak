@@ -13,6 +13,7 @@ import type { AiSpeakRepeatCell, AiSpeakRepeatSlideProps } from '@/lessons/types
 import { DEFAULT_SPEECH_LANG, type SupportedLang } from '@/lib/voices';
 import { fetchSpeechAsset, type SpeechAsset } from '@/lib/speech';
 import { getShowValue } from '@/lib/slideUtils';
+import { useAudioSequence, type AudioItem } from '@/hooks/audio/useAudioSequence';
 
 type AISpeakRepeatProps = AiSpeakRepeatSlideProps;
 
@@ -68,9 +69,8 @@ export default function AISpeakRepeatSlide({
 
   const flatElements = useMemo(() => flattenRows(rows), [rows]);
 
-  const [currentIndex, setCurrentIndex] = useState<number | null>(null);
+  // UI state
   const [playedIndices, setPlayedIndices] = useState<Set<number>>(new Set());
-  const [isPlaying, setIsPlaying] = useState(false);
   const [isPlayingAll, setIsPlayingAll] = useState(false);
   const [hasPlayedAllInitially, setHasPlayedAllInitially] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,36 +78,35 @@ export default function AISpeakRepeatSlide({
     'idle',
   );
 
+  // Audio asset caching (component-specific)
   const audioCache = useRef<Map<number, SpeechAsset>>(new Map());
-  const activeSequenceRef = useRef(0);
-  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [audioItems, setAudioItems] = useState<AudioItem[]>([]);
   const nextIndexRef = useRef(0);
 
   const resetStateForNewSequence = useCallback(() => {
     setPlayedIndices(() => new Set());
-    setCurrentIndex(null);
     setError(null);
     setSequenceState('idle');
   }, []);
 
+  // Cleanup audio cache on unmount
   useEffect(() => {
     const cache = audioCache.current;
     return () => {
-      activeSequenceRef.current += 1;
-      currentAudioRef.current?.pause();
-      currentAudioRef.current?.removeAttribute('src');
-      currentAudioRef.current = null;
       cache.forEach((asset) => asset.revoke?.());
       cache.clear();
     };
   }, []);
 
+  // Clear cache when rows change
   useEffect(() => {
     const cache = audioCache.current;
     cache.forEach((asset) => asset.revoke?.());
     cache.clear();
+    setAudioItems([]);
   }, [rows]);
 
+  // Resolve audio asset for a cell (cached)
   const resolveAudio = useCallback(
     async (cell: AiSpeakRepeatCell, index: number) => {
       if (audioCache.current.has(index)) {
@@ -125,248 +124,168 @@ export default function AISpeakRepeatSlide({
     [defaultLang],
   );
 
-  const playAudioForIndex = useCallback(
-    (asset: SpeechAsset, index: number, sequenceId: number) =>
-      new Promise<number>((resolve, reject) => {
-        const audio = new Audio(asset.url);
-        currentAudioRef.current = audio;
+  // Pre-resolve all audio assets and build items array
+  useEffect(() => {
+    let cancelled = false;
+    const resolveAll = async () => {
+      const items: AudioItem[] = [];
+      for (let i = 0; i < flatElements.length; i += 1) {
+        if (cancelled) return;
+        const cell = flatElements[i];
+        if (!cell) continue;
 
-        const handleError = () => {
-          audio.pause();
-          audio.removeAttribute('src');
-          if (currentAudioRef.current === audio) {
-            currentAudioRef.current = null;
-          }
-          const fallbackLabel = flatElements[index]?.label ?? 'élément';
-          reject(new Error(`Impossible de lire l'élément "${fallbackLabel}"`));
-        };
-
-        audio.addEventListener(
-          'loadedmetadata',
-          () => {
-            if (activeSequenceRef.current !== sequenceId) {
-              audio.pause();
-              audio.removeAttribute('src');
-              if (currentAudioRef.current === audio) {
-                currentAudioRef.current = null;
-              }
-              resolve(0);
-              return;
-            }
-
-            setCurrentIndex(index);
-            audio
-              .play()
-              .catch((err) => {
-                handleError();
-                reject(err);
-              });
-          },
-          { once: true },
-        );
-
-        audio.addEventListener(
-          'ended',
-          () => {
-            const duration = audio.duration || 0;
-            setPlayedIndices((prev) => {
-              const next = new Set(prev);
-              next.add(index);
-              return next;
-            });
-            audio.pause();
-            audio.removeAttribute('src');
-            if (currentAudioRef.current === audio) {
-              currentAudioRef.current = null;
-            }
-            resolve(duration);
-          },
-          { once: true },
-        );
-
-        audio.addEventListener('error', handleError, { once: true });
-      }),
-    [flatElements],
-  );
-
-  const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-  const runSequence = useCallback(
-    async (startIndex: number, sequenceId: number) => {
-      try {
-        for (let index = startIndex; index < flatElements.length; index += 1) {
-          if (activeSequenceRef.current !== sequenceId) break;
-
-          const cell = flatElements[index];
-          if (!cell) continue;
-
-          setCurrentIndex(index);
-          nextIndexRef.current = index;
-          const asset = await resolveAudio(cell, index);
-
-          if (activeSequenceRef.current !== sequenceId) break;
-
-          const _duration = await playAudioForIndex(asset, index, sequenceId);
-
-          if (activeSequenceRef.current !== sequenceId) break;
-
-          setPlayedIndices((prev) => {
-            if (prev.has(index)) return prev;
-            const next = new Set(prev);
-            next.add(index);
-            return next;
+        try {
+          const asset = await resolveAudio(cell, i);
+          if (cancelled) return;
+          items.push({
+            id: `${cell.label}-${i}`,
+            url: asset.url,
           });
+        } catch (err) {
+          console.error(`Failed to resolve audio for index ${i}:`, err);
+          // Use placeholder URL to keep array length consistent
+          items.push({
+            id: `${cell.label}-${i}`,
+            url: '',
+          });
+        }
+      }
+      if (!cancelled) {
+        setAudioItems(items);
+      }
+    };
 
-          nextIndexRef.current = index + 1;
-          // 1.5 second delay between elements
-          await wait(1500);
-        }
-      } catch (err) {
-        console.error(err);
-        setError(err instanceof Error ? err.message : 'Lecture impossible.');
-      } finally {
-        if (activeSequenceRef.current === sequenceId) {
-          currentAudioRef.current = null;
-          setIsPlaying(false);
-          setIsPlayingAll(false);
-          setCurrentIndex(null);
-          if (nextIndexRef.current >= flatElements.length) {
-            setSequenceState('completed');
-          } else {
-            setSequenceState('idle');
-          }
-        }
+    resolveAll();
+    return () => {
+      cancelled = true;
+    };
+  }, [flatElements, resolveAudio]);
+
+  // Use audio sequence hook
+  const {
+    currentIndex,
+    isPlaying,
+    isPaused,
+    playItem,
+    playAllFrom,
+    pause,
+    resume,
+    stop,
+  } = useAudioSequence({
+    items: audioItems,
+    delayBetweenItemsMs: 1500,
+    onItemStart: (index) => {
+      // Update nextIndexRef for resume logic
+      nextIndexRef.current = index;
+    },
+    onItemEnd: (index) => {
+      // Mark as played
+      setPlayedIndices((prev) => {
+        const next = new Set(prev);
+        next.add(index);
+        return next;
+      });
+      nextIndexRef.current = index + 1;
+    },
+    onSequenceEnd: () => {
+      setIsPlayingAll(false);
+      if (nextIndexRef.current >= flatElements.length) {
+        setSequenceState('completed');
+      } else {
+        setSequenceState('idle');
       }
     },
-    [flatElements, playAudioForIndex, resolveAudio],
-  );
+    onError: (err) => {
+      setError(err.message);
+    },
+  });
 
-  const startSequence = useCallback(
-    async ({ resume }: { resume?: boolean } = {}) => {
-      if (flatElements.length === 0 || isPlaying) return;
-
-      const canResume =
-        resume &&
-        sequenceState === 'paused' &&
-        nextIndexRef.current < flatElements.length &&
-        nextIndexRef.current >= 0;
-
-      if (!canResume) {
-        // Only reset if this is the initial play all
-        if (!hasPlayedAllInitially) {
-          resetStateForNewSequence();
-          nextIndexRef.current = 0;
-          setHasPlayedAllInitially(true);
-        } else {
-          // After initial play, resume from current position
-          return;
-        }
-      }
-
-      currentAudioRef.current?.pause();
-      currentAudioRef.current?.removeAttribute('src');
-      currentAudioRef.current = null;
-      activeSequenceRef.current += 1;
-      const sequenceId = activeSequenceRef.current;
-      setIsPlaying(true);
+  // Sync isPlayingAll with hook's isPlaying when in sequence mode
+  useEffect(() => {
+    if (isPlaying && !isPaused) {
       setIsPlayingAll(true);
       setSequenceState('playing');
-      const startIndex = canResume ? nextIndexRef.current : 0;
-      setError(null);
-      await runSequence(startIndex, sequenceId);
-    },
-    [flatElements.length, isPlaying, resetStateForNewSequence, runSequence, sequenceState, hasPlayedAllInitially],
-  );
-
-  const stopAllPlayback = useCallback(() => {
-    activeSequenceRef.current += 1;
-    if (currentAudioRef.current) {
-      currentAudioRef.current.pause();
-      currentAudioRef.current.removeAttribute('src');
-      currentAudioRef.current = null;
+    } else if (isPaused) {
+      setIsPlayingAll(false);
+      setSequenceState('paused');
+    } else if (!isPlaying && sequenceState === 'playing') {
+      setIsPlayingAll(false);
     }
-    setIsPlaying(false);
-    setIsPlayingAll(false);
-    setCurrentIndex(null);
-    // sequenceState is managed by the caller
-  }, []);
+  }, [isPlaying, isPaused, sequenceState]);
 
   const handlePlayClick = useCallback(() => {
     if (sequenceState === 'paused' && nextIndexRef.current < flatElements.length) {
-      startSequence({ resume: true });
+      resume();
     } else {
-      startSequence();
+      // Start sequence
+      if (!hasPlayedAllInitially) {
+        resetStateForNewSequence();
+        nextIndexRef.current = 0;
+        setHasPlayedAllInitially(true);
+        playAllFrom(0);
+      }
     }
-  }, [flatElements.length, sequenceState, startSequence]);
+  }, [sequenceState, flatElements.length, hasPlayedAllInitially, resetStateForNewSequence, playAllFrom, resume]);
 
   const handleTogglePlayAll = useCallback(() => {
     if (isPlayingAll) {
-      // Pause the sequence - set state to paused before stopping
+      // Pause
       setSequenceState('paused');
-      stopAllPlayback();
+      pause();
     } else {
-      // Allow starting if it's the initial play or resuming from pause
+      // Start or resume
       if (!hasPlayedAllInitially) {
         // First time - start from beginning
-        startSequence();
+        resetStateForNewSequence();
+        nextIndexRef.current = 0;
+        setHasPlayedAllInitially(true);
+        playAllFrom(0);
       } else if (sequenceState === 'paused') {
         // Resume from where it left off
-        startSequence({ resume: true });
+        resume();
       }
     }
-  }, [isPlayingAll, stopAllPlayback, startSequence, hasPlayedAllInitially, sequenceState]);
-
-  const _pauseSequence = useCallback(() => {
-    if (!isPlaying && currentAudioRef.current === null) return;
-    stopAllPlayback();
-  }, [isPlaying, stopAllPlayback]);
+  }, [isPlayingAll, pause, resume, playAllFrom, hasPlayedAllInitially, sequenceState, resetStateForNewSequence]);
 
   const playSingleCell = useCallback(
-    async (cell: AiSpeakRepeatCell, index: number) => {
+    async (index: number) => {
+      // Ensure audio is resolved before playing
+      const cell = flatElements[index];
+      if (!cell) return;
+
       try {
-        // Stop any currently playing audio
-        if (currentAudioRef.current) {
-          currentAudioRef.current.pause();
-          currentAudioRef.current.removeAttribute('src');
-          currentAudioRef.current = null;
-        }
-
+        // Ensure asset is resolved and items array is updated
         const asset = await resolveAudio(cell, index);
-        const audio = new Audio(asset.url);
-        currentAudioRef.current = audio;
-
-        audio.addEventListener('ended', () => {
-          if (currentAudioRef.current === audio) {
-            currentAudioRef.current = null;
+        
+        // Update items array if needed
+        setAudioItems((prev) => {
+          const updated = [...prev];
+          if (!updated[index] || updated[index].url !== asset.url) {
+            updated[index] = {
+              id: `${cell.label}-${index}`,
+              url: asset.url,
+            };
           }
+          return updated;
         });
 
-        audio.addEventListener('error', () => {
-          if (currentAudioRef.current === audio) {
-            currentAudioRef.current = null;
-          }
-          const fallbackLabel = cell.label ?? 'élément';
-          setError(`Impossible de lire l'élément "${fallbackLabel}"`);
-        });
-
-        await audio.play();
+        // Wait a tick for state update, then play
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        await playItem(index);
       } catch (err) {
         console.error(err);
         setError(err instanceof Error ? err.message : 'Impossible de lire cet élément.');
-        if (currentAudioRef.current) {
-          currentAudioRef.current = null;
-        }
       }
     },
-    [resolveAudio],
+    [flatElements, resolveAudio, playItem],
   );
 
   const handleCellClick = useCallback(
     (cell: AiSpeakRepeatCell, index: number, isFirst: boolean) => {
       // If playing all sequence, interrupt it and play the clicked letter
       if (isPlayingAll) {
-        stopAllPlayback();
-        playSingleCell(cell, index);
+        stop();
+        playSingleCell(index);
         return;
       }
 
@@ -376,7 +295,7 @@ export default function AISpeakRepeatSlide({
         if (isFirst) {
           handlePlayClick();
         } else {
-          playSingleCell(cell, index);
+          playSingleCell(index);
         }
         return;
       }
@@ -386,11 +305,11 @@ export default function AISpeakRepeatSlide({
         if (isFirst) {
           handlePlayClick();
         } else {
-          playSingleCell(cell, index);
+          playSingleCell(index);
         }
       }
     },
-    [handlePlayClick, playSingleCell, sequenceState, isPlayingAll, stopAllPlayback],
+    [handlePlayClick, playSingleCell, sequenceState, isPlayingAll, stop],
   );
 
   const handleCellKeyDown = useCallback(
@@ -405,6 +324,7 @@ export default function AISpeakRepeatSlide({
 
   const getElementStyles = useCallback(
     (globalIndex: number) => {
+      // Use currentIndex from hook for highlighting
       if (currentIndex === globalIndex) {
         // Currently being played - teal color
         return {
@@ -427,6 +347,13 @@ export default function AISpeakRepeatSlide({
     },
     [currentIndex, playedIndices],
   );
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stop();
+    };
+  }, [stop]);
 
   return (
     <div className="flex min-h-[60vh] md:h-full w-full flex-col px-4 py-6 sm:px-6 sm:py-8 lg:py-10 leading-relaxed md:leading-loose pt-2 md:pt-4">
