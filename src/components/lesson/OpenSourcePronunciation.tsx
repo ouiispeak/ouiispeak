@@ -1,6 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect, type SVGProps } from 'react';
+import { useState, useRef, useEffect, useCallback, type SVGProps } from 'react';
+import { getUserMediaStream, getUserMediaError } from '@/lib/audio/getUserMediaStream';
+import { setupAudioVisualization } from '@/lib/audio/setupAudioVisualization';
+import { submitPronunciationAssessment } from '@/lib/audio/submitPronunciationAssessment';
+import { useAudioLevel } from '@/hooks/audio/useAudioLevel';
+import { useSilenceDetection } from '@/hooks/audio/useSilenceDetection';
 
 type Props = {
   referenceText: string;
@@ -47,17 +52,17 @@ export function OpenSourcePronunciation({ referenceText, showReferenceLabel = tr
     { reference: string; actual: string | null; correct: boolean }[]
   >([]);
   const [error, setError] = useState<string | null>(null);
-  const [audioLevel, setAudioLevel] = useState(0);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const pendingStopRef = useRef(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const silenceStartTimeRef = useRef<number | null>(null);
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Use hook for audio level monitoring
+  const audioLevel = useAudioLevel(analyserRef.current, isRecording);
 
   async function startRecording() {
     if (typeof window === 'undefined') return;
@@ -71,44 +76,19 @@ export function OpenSourcePronunciation({ referenceText, showReferenceLabel = tr
     setScore(null);
     setTranscript(null);
     setWords([]);
+    // Reset pendingStop at the start of recording to ensure clean state
     pendingStopRef.current = false;
-    silenceStartTimeRef.current = null;
+    console.log('[START-RECORDING] Reset pendingStop to false');
+    // Silence detection is handled by useSilenceDetection hook
 
     let stream: MediaStream;
     try {
-      // Request audio with specific constraints
-      stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        } 
-      });
+      stream = await getUserMediaStream();
       streamRef.current = stream;
-      
-      console.log('Got media stream:', stream);
-      console.log('Stream ID:', stream.id);
-      console.log('Active:', stream.active);
-      const audioTracks = stream.getAudioTracks();
-      console.log('Audio tracks:', audioTracks.length);
-      audioTracks.forEach((track, i) => {
-        console.log(`Track ${i}:`, {
-          id: track.id,
-          kind: track.kind,
-          label: track.label,
-          enabled: track.enabled,
-          muted: track.muted,
-          readyState: track.readyState,
-          settings: track.getSettings(),
-          constraints: track.getConstraints(),
-        });
-      });
     } catch (err: unknown) {
-      console.error('getUserMedia error:', err);
-      const isPermissionError = err instanceof DOMException && err.name === 'NotAllowedError';
-      const message = isPermissionError
-        ? "L'accès au micro a été refusé."
-        : "Impossible d'accéder au micro.";
+      const message = err instanceof Error && err.message.includes('n\'est pas pris en charge')
+        ? err.message
+        : getUserMediaError(err);
       setError(message);
       return;
     }
@@ -118,39 +98,8 @@ export function OpenSourcePronunciation({ referenceText, showReferenceLabel = tr
     mediaRecorderRef.current = mr;
 
     // Set up audio visualization BEFORE starting MediaRecorder
-    let audioContext: AudioContext | null = null;
-    let analyser: AnalyserNode | null = null;
-    
     try {
-      console.log('Setting up audio visualization...');
-      
-      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      console.log('Audio context created, state:', audioContext.state);
-      
-      // Resume audio context if suspended (required for some browsers)
-      if (audioContext.state === 'suspended') {
-        await audioContext.resume();
-        console.log('Audio context resumed, new state:', audioContext.state);
-      }
-      
-      analyser = audioContext.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.3; // Lower for more responsive
-      
-      console.log('Creating media stream source from stream:', stream.id);
-      const microphone = audioContext.createMediaStreamSource(stream);
-      console.log('Media stream source created');
-      
-      microphone.connect(analyser);
-      console.log('Analyser connected to microphone source');
-      
-      // Verify connection
-      console.log('Analyser node:', {
-        fftSize: analyser.fftSize,
-        frequencyBinCount: analyser.frequencyBinCount,
-        smoothingTimeConstant: analyser.smoothingTimeConstant,
-      });
-      
+      const { audioContext, analyser } = await setupAudioVisualization(stream);
       audioContextRef.current = audioContext;
       analyserRef.current = analyser;
     } catch (err) {
@@ -164,141 +113,25 @@ export function OpenSourcePronunciation({ referenceText, showReferenceLabel = tr
       }
     };
 
-    // Start animation loop for audio level - define it here so it has access to the refs
-    const updateAudioLevel = () => {
-      const analyser = analyserRef.current;
-      const recorder = mediaRecorderRef.current;
-      
-      if (!analyser || !recorder) {
-        console.log('[ANIMATION] Stopping: analyser or recorder missing', { analyser: !!analyser, recorder: !!recorder });
-        return;
-      }
-      
-      // Check if still recording
-      if (recorder.state !== 'recording') {
-        console.log('[ANIMATION] Recorder state is not recording:', recorder.state, '- stopping animation loop');
-        return;
-      }
-      
-      // Use time domain data for better volume detection
-      const dataArray = new Uint8Array(analyser.fftSize);
-      analyser.getByteTimeDomainData(dataArray);
-      
-      // Calculate RMS (Root Mean Square) for volume
-      let sum = 0;
-      for (let i = 0; i < dataArray.length; i++) {
-        const normalized = (dataArray[i] - 128) / 128; // Normalize to -1 to 1
-        sum += normalized * normalized;
-      }
-      const rms = Math.sqrt(sum / dataArray.length);
-      const normalizedLevel = Math.min(rms * 2, 1); // Scale and clamp to 0-1
-      
-      // Also get max amplitude for debugging
-      const maxAmplitude = Math.max(...Array.from(dataArray));
-      const minAmplitude = Math.min(...Array.from(dataArray));
-      const amplitudeRange = maxAmplitude - minAmplitude;
-      
-      // Debug logging (throttled)
-      if (Math.random() < 0.1) { // Log ~10% of the time
-        const allZeros = dataArray.every(v => v === 128); // 128 is silence in time domain
-        console.log('Audio level:', { 
-          rms: rms.toFixed(3), 
-          normalizedLevel: normalizedLevel.toFixed(3),
-          amplitudeRange,
-          maxAmplitude,
-          minAmplitude,
-          allZeros, // If true, analyser isn't getting data
-          sampleValues: Array.from(dataArray.slice(0, 10)),
-          dataArrayLength: dataArray.length
-        });
-        
-        if (allZeros) {
-          console.warn('WARNING: All audio samples are 128 (silence). Analyser may not be receiving data.');
-        }
-      }
-      
-      setAudioLevel(normalizedLevel);
-      
-      // Auto-stop detection: if audio level is below threshold for 1 second, stop recording
-      const SILENCE_THRESHOLD = 0.20; // 15% threshold
-      const SILENCE_DURATION = 1500; // 1 second of silence
-      
-      // Auto-stop detection: check conditions and log for debugging
-      const recorderIsActive = mediaRecorderRef.current?.state === 'recording';
-      if (recorderIsActive) {
-        if (normalizedLevel < SILENCE_THRESHOLD) {
-          if (silenceStartTimeRef.current === null) {
-            silenceStartTimeRef.current = Date.now();
-            console.log(`[AUTO-STOP] Silence detected (level: ${(normalizedLevel * 100).toFixed(1)}%), starting timer...`);
-          } else {
-            const silenceDuration = Date.now() - silenceStartTimeRef.current;
-            console.log(`[AUTO-STOP] Still silent (level: ${(normalizedLevel * 100).toFixed(1)}%), duration: ${silenceDuration}ms / ${SILENCE_DURATION}ms`);
-            if (silenceDuration >= SILENCE_DURATION) {
-              console.log(`[AUTO-STOP] ✅ Stopping recording due to 1 second of silence (level: ${(normalizedLevel * 100).toFixed(1)}%)`);
-              stopRecording();
-              return;
-            }
-          }
-        } else {
-          if (silenceStartTimeRef.current !== null) {
-            console.log(`[AUTO-STOP] Audio detected (level: ${(normalizedLevel * 100).toFixed(1)}%), resetting silence timer`);
-            silenceStartTimeRef.current = null;
-          }
-        }
-      } else {
-        if (!recorderIsActive) {
-          console.log('[AUTO-STOP] Skipped: recorder not active');
-        }
-        if (pendingStopRef.current) {
-          console.log('[AUTO-STOP] Skipped: pendingStop is true');
-        }
-      }
-      
-      // Continue animation
-      animationFrameRef.current = requestAnimationFrame(updateAudioLevel);
-    };
+    // Audio level monitoring is now handled by useAudioLevel hook
+    // Silence detection will be extracted in Step 2.2
 
     mr.onstop = async () => {
       const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-      const formData = new FormData();
-      formData.append('file', blob, 'audio.webm');
 
       try {
-        console.log('Sending audio to pronunciation assessment API...', {
-          blobSize: blob.size,
-          referenceText,
-        });
-        
-        const res = await fetch(
-          `/api/pronunciation-assessment?referenceText=${encodeURIComponent(referenceText)}`,
-          {
-            method: 'POST',
-            body: formData,
-          },
-        );
-
-        console.log('API response status:', res.status, res.statusText);
-
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          console.error('API error response:', body);
-          setError(body.error ?? `Server error (${res.status})`);
-          return;
-        }
-
-        const data = await res.json();
-        console.log('Pronunciation assessment result:', data);
-        const newWords = data.words ?? [];
+        const data = await submitPronunciationAssessment(blob, referenceText);
         setTranscript(data.transcript);
         setScore(data.score);
-        setWords(newWords);
-        onWordResults?.(newWords);
+        setWords(data.words);
+        onWordResults?.(data.words);
         onRecordingComplete?.();
       } catch (err: unknown) {
         console.error('Fetch error:', err);
         const errorMessage = err instanceof Error ? err.message : 'Unknown error';
         setError(`Impossible de contacter le serveur de prononciation: ${errorMessage}`);
       } finally {
+        // Reset pendingStop after stop handler completes
         pendingStopRef.current = false;
         chunksRef.current = [];
         mr.stream.getTracks().forEach((track) => {
@@ -324,35 +157,28 @@ export function OpenSourcePronunciation({ referenceText, showReferenceLabel = tr
     console.log('MediaRecorder start() called, initial state:', mr.state);
     setIsRecording(true);
     
-    // Wait for MediaRecorder to actually start recording (it's async)
-    const waitForRecording = () => {
-      if (currentRecorder.state === 'recording') {
-        console.log('MediaRecorder is now recording, starting audio level animation');
-        if (currentAnalyser) {
-          updateAudioLevel();
-        } else {
-          console.warn('Analyser not available');
-        }
-      } else {
-        console.log('Waiting for MediaRecorder to start... current state:', currentRecorder.state);
-        setTimeout(waitForRecording, 50);
-      }
-    };
-    
-    // Start checking after a short delay
-    setTimeout(waitForRecording, 50);
+    // Audio level monitoring is now handled automatically by useAudioLevel hook
   }
 
-  function stopRecording() {
+  const stopRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current;
     if (!recorder || recorder.state === 'inactive') {
       console.log('[STOP-RECORDING] No active recorder, ignoring');
+      // Reset pendingStop if recorder is already inactive
+      pendingStopRef.current = false;
+      return;
+    }
+
+    // Guard against double-stops - but only if recorder is already stopping
+    // If recorder is still recording, we need to stop it even if pendingStop is true
+    if (pendingStopRef.current && recorder.state !== 'recording') {
+      console.log('[STOP-RECORDING] Already stopping (pendingStop is true and recorder not recording), ignoring duplicate call');
       return;
     }
 
     console.log('[STOP-RECORDING] Called, setting pendingStop to true');
     pendingStopRef.current = true;
-    silenceStartTimeRef.current = null;
+    // Silence detection cleanup is handled by useSilenceDetection hook
     if (silenceTimeoutRef.current) {
       clearTimeout(silenceTimeoutRef.current);
       silenceTimeoutRef.current = null;
@@ -360,13 +186,8 @@ export function OpenSourcePronunciation({ referenceText, showReferenceLabel = tr
     console.log('[STOP-RECORDING] Stopping MediaRecorder, state:', recorder.state);
     recorder.stop();
     setIsRecording(false);
-    setAudioLevel(0);
     
-    // Stop animation loop
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-    }
+    // Audio level monitoring cleanup is handled by useAudioLevel hook
     
     // Clean up audio context
     if (audioContextRef.current) {
@@ -376,7 +197,31 @@ export function OpenSourcePronunciation({ referenceText, showReferenceLabel = tr
     analyserRef.current = null;
     
     // Stream tracks will be stopped in the MediaRecorder onstop handler
-  }
+  }, []); // No dependencies - uses refs and state setters which are stable
+
+  // Silence detection hook - monitors analyser directly and auto-stops when silence detected
+  // Reads analyser directly (not gated by rAF) to avoid stale values when tab is backgrounded
+  // Note: We check recorder state directly, not pendingStopRef, because refs can be stale
+  const handleSilenceDetected = useCallback(() => {
+    // Check recorder state directly - this is the source of truth
+    // Don't check pendingStopRef here - stopRecording() has its own guard against double-stops
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state === 'recording') {
+      console.log('[AUTO-STOP] handleSilenceDetected: calling stopRecording()');
+      stopRecording(); // stopRecording() will check pendingStopRef internally and prevent double-stops
+    } else {
+      console.log('[AUTO-STOP] handleSilenceDetected: skipping - recorder not in recording state', {
+        hasRecorder: !!recorder,
+        recorderState: recorder?.state
+      });
+    }
+  }, [stopRecording]);
+
+  useSilenceDetection(
+    analyserRef.current, // Pass analyser directly so hook can read it independently of rAF
+    isRecording, // Only gate with isRecording - callback will check pendingStopRef
+    handleSilenceDetected
+  );
 
   // Auto-start recording when autoStart prop is true
   useEffect(() => {
@@ -410,17 +255,13 @@ export function OpenSourcePronunciation({ referenceText, showReferenceLabel = tr
       mediaRecorderRef.current = null;
 
       // Clean up audio visualization
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-      }
+      // Animation frame cleanup is handled by useAudioLevel hook
       if (audioContextRef.current) {
         audioContextRef.current.close().catch(() => {});
         audioContextRef.current = null;
       }
       analyserRef.current = null;
       streamRef.current = null;
-      setAudioLevel(0);
     };
   }, []);
 
